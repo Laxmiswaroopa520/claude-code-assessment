@@ -1,0 +1,19 @@
+{
+  "enabledPlugins": {
+    "react-coding-standards-best-practices@cognine-coding-standards-best-practices": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dotnet run \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-guard.cs\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
