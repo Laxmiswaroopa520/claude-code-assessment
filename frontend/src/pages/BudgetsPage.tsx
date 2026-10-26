@@ -4,213 +4,256 @@ import { ApiError } from '../api/client'
 import { budgetsApi } from '../api/budgets'
 import { BudgetProgress } from '../components/BudgetStatusBadge'
 import { CategorySelect } from '../components/CategorySelect'
-import { ConfirmButton } from '../components/ConfirmButton'
-import { EmptyState, ErrorMessage, FieldError, LoadingState, SuccessMessage } from '../components/StatusMessages'
+import { EmptyState, ErrorMessage, LoadingState } from '../components/StatusMessages'
+import { Button } from '../components/ui/Button'
+import { ConfirmDialog } from '../components/ui/Dialog'
+import { DrawerForm } from '../components/ui/Drawer'
+import { Field } from '../components/ui/Field'
+import { fieldA11y } from '../components/ui/fieldA11y'
+import { useToast } from '../components/ui/toastContext'
 import { useBudgets } from '../hooks/useBudgets'
 import { useCategories } from '../hooks/useCategories'
-import type { Budget, BudgetType } from '../types/api'
-import { formatMoney, toMonth } from '../utils/format'
+import { PageHeader } from '../layout/PageHeader'
+import type { Budget, BudgetStatus, BudgetType, Category } from '../types/api'
+import { formatMoney, formatMonthLabel } from '../utils/format'
 import { validateMoney } from '../utils/validation'
 
-interface BudgetFormValues {
-  categoryId: string
-  limit: string
-  type: BudgetType
+type FormState = { mode: 'closed' } | { mode: 'add' } | { mode: 'edit'; budget: Budget }
+
+const typeHelp: Record<BudgetType, string> = {
+  Hard: 'Expenses that would go over the limit are rejected (HTTP 422).',
+  Soft: 'Expenses over the limit are saved with a warning.',
 }
 
-function apiMessage(caught: unknown, fallback: string): string {
-  return caught instanceof ApiError ? (caught.detail ?? caught.title) : fallback
+interface BudgetFormProps {
+  state: FormState
+  month: string
+  categories: Category[]
+  onClose: () => void
+  onSaved: (budget: Budget, created: boolean) => void
 }
 
-function BudgetRow({ budget, onChanged, onError }: { budget: Budget; onChanged: (message: string) => void; onError: (message: string) => void }) {
-  const [editing, setEditing] = useState<boolean>(false)
-  const [limit, setLimit] = useState<string>(budget.limit.toFixed(2))
-  const [type, setType] = useState<BudgetType>(budget.type)
-  const [error, setError] = useState<string | undefined>(undefined)
+function BudgetForm({ state, month, categories, onClose, onSaved }: BudgetFormProps) {
+  const editing = state.mode === 'edit' ? state.budget : null
+  const targetMonth = editing?.month ?? month
+  const [categoryId, setCategoryId] = useState<string>(editing ? String(editing.categoryId) : '')
+  const [limit, setLimit] = useState<string>(editing ? editing.limit.toFixed(2) : '')
+  const [type, setType] = useState<BudgetType>(editing?.type ?? 'Hard')
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({})
+  const [formError, setFormError] = useState<string | undefined>(undefined)
+  const [saving, setSaving] = useState<boolean>(false)
 
-  const save = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+  const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault()
-    const limitError = validateMoney(limit, 'Limit')
-    setError(limitError)
-    if (limitError) {
+    if (saving) {
       return
     }
 
-    try {
-      await budgetsApi.update(budget.id, { categoryId: budget.categoryId, month: budget.month, limit: Number(limit), type })
-      setEditing(false)
-      onChanged(`Updated the ${budget.categoryName} budget.`)
-    } catch (caught: unknown) {
-      setError(caught instanceof ApiError ? (caught.fieldError('limit') ?? caught.detail ?? caught.title) : 'The budget could not be saved.')
+    setFormError(undefined)
+    const nextErrors: Record<string, string | undefined> = {
+      categoryId: categoryId === '' ? 'Category is required.' : undefined,
+      limit: validateMoney(limit, 'Limit'),
     }
-  }
+    setErrors(nextErrors)
+    if (nextErrors.categoryId || nextErrors.limit) {
+      return
+    }
 
-  const remove = async (): Promise<void> => {
+    setSaving(true)
     try {
-      await budgetsApi.remove(budget.id)
-      onChanged(`Deleted the ${budget.categoryName} budget.`)
+      const body = { categoryId: Number(categoryId), month: targetMonth, limit: Number(limit), type }
+      const saved = editing ? await budgetsApi.update(editing.id, body) : await budgetsApi.create(body)
+      onSaved(saved, editing === null)
     } catch (caught: unknown) {
-      onError(apiMessage(caught, 'The budget could not be deleted.'))
+      if (caught instanceof ApiError && Object.keys(caught.fieldErrors).length > 0) {
+        setErrors({ categoryId: caught.fieldError('categoryId'), limit: caught.fieldError('limit') ?? caught.fieldError('month') })
+      } else {
+        // 409: a budget already exists for this category and month.
+        setFormError(caught instanceof ApiError ? (caught.detail ?? caught.title) : 'The budget could not be saved.')
+      }
+    } finally {
+      setSaving(false)
     }
   }
 
   return (
-    <li className="card budget">
-      <div className="budget-header">
-        <h3>{budget.categoryName}</h3>
-        <span className="muted">{budget.type} budget</span>
-      </div>
-      <p>
-        {formatMoney(budget.spent)} spent of {formatMoney(budget.limit)} · {formatMoney(budget.remaining)} remaining
-      </p>
-      <BudgetProgress percentUsed={budget.percentUsed} status={budget.status} label={`${budget.categoryName} budget used`} />
-      {editing ? (
-        <form className="inline-form" onSubmit={(event) => void save(event)} noValidate>
-          <label htmlFor={`budget-limit-${budget.id}`}>Limit</label>
-          <input
-            id={`budget-limit-${budget.id}`}
-            inputMode="decimal"
-            value={limit}
-            onChange={(event) => setLimit(event.target.value)}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? `budget-limit-${budget.id}-error` : undefined}
-          />
-          <label htmlFor={`budget-type-${budget.id}`}>Type</label>
-          <select id={`budget-type-${budget.id}`} value={type} onChange={(event) => setType(event.target.value as BudgetType)}>
-            <option value="Hard">Hard (reject overspending)</option>
-            <option value="Soft">Soft (warn only)</option>
-          </select>
-          <button type="submit">Save</button>
-          <button type="button" onClick={() => setEditing(false)}>
-            Cancel
-          </button>
-          <FieldError id={`budget-limit-${budget.id}-error`} message={error} />
-        </form>
-      ) : (
-        <div className="actions">
-          <button type="button" onClick={() => setEditing(true)} aria-label={`Edit ${budget.categoryName} budget`}>
-            Edit
-          </button>
-          <ConfirmButton label="Delete" confirmLabel="Confirm delete" ariaLabel={`Delete ${budget.categoryName} budget`} onConfirm={remove} />
+    <DrawerForm
+      open={state.mode !== 'closed'}
+      title={editing ? `Edit ${editing.categoryName} budget` : 'Add budget'}
+      description={`Budget for ${formatMonthLabel(targetMonth)}. One budget per category per month.`}
+      submitLabel={editing ? 'Save changes' : 'Add budget'}
+      saving={saving}
+      onSubmit={(event) => void submit(event)}
+      onClose={onClose}
+    >
+      {formError ? <ErrorMessage title="The budget could not be saved" error={formError} /> : null}
+      <Field id="budget-categoryId" label="Category" error={errors.categoryId}>
+        <CategorySelect id="budget-categoryId" value={categoryId} categories={categories} onChange={setCategoryId} error={errors.categoryId} />
+      </Field>
+      <Field id="budget-limit" label="Monthly limit" error={errors.limit}>
+        <input id="budget-limit" inputMode="decimal" value={limit} onChange={(event) => setLimit(event.target.value)} placeholder="0.00" data-autofocus={editing ? true : undefined} {...fieldA11y('budget-limit', errors.limit)} />
+      </Field>
+      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+        <legend className="field-label" style={{ marginBottom: '0.35rem' }}>
+          Enforcement
+        </legend>
+        <div className="segmented">
+          {(['Hard', 'Soft'] as BudgetType[]).map((option) => (
+            <label key={option}>
+              <input type="radio" name="budget-type" value={option} checked={type === option} onChange={() => setType(option)} />
+              <strong>{option}</strong>
+              <span>{typeHelp[option]}</span>
+            </label>
+          ))}
         </div>
-      )}
-    </li>
+      </fieldset>
+    </DrawerForm>
   )
 }
 
-export function BudgetsPage() {
-  const [month, setMonth] = useState<string>(toMonth())
+const statusOrder: BudgetStatus[] = ['OnTrack', 'Warning', 'Exceeded']
+const statusLabels: Record<BudgetStatus, string> = { OnTrack: 'On track', Warning: 'Warning', Exceeded: 'Exceeded' }
+
+export function BudgetsPage({ month, onMonthChange }: { month: string; onMonthChange: (month: string) => void }) {
   const categories = useCategories()
   const budgets = useBudgets(month)
-  const [values, setValues] = useState<BudgetFormValues>({ categoryId: '', limit: '', type: 'Hard' })
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [notice, setNotice] = useState<string | undefined>(undefined)
-  const [pageError, setPageError] = useState<string | undefined>(undefined)
+  const toast = useToast()
+  const [form, setForm] = useState<FormState>({ mode: 'closed' })
+  const [formKey, setFormKey] = useState<number>(0)
+  const [deleting, setDeleting] = useState<Budget | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState<boolean>(false)
 
-  const add = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
-    event.preventDefault()
-    setPageError(undefined)
-    const nextErrors: Record<string, string> = {}
-    if (values.categoryId.length === 0) {
-      nextErrors.categoryId = 'Category is required.'
-    }
-
-    const limitError = validateMoney(values.limit, 'Limit')
-    if (limitError) {
-      nextErrors.limit = limitError
-    }
-
-    setErrors(nextErrors)
-    if (Object.keys(nextErrors).length > 0) {
-      return
-    }
-
-    try {
-      const created = await budgetsApi.create({ categoryId: Number(values.categoryId), month, limit: Number(values.limit), type: values.type })
-      setValues({ categoryId: '', limit: '', type: 'Hard' })
-      setNotice(`Added a ${created.type} budget for ${created.categoryName} in ${created.month}.`)
-      budgets.reload()
-    } catch (caught: unknown) {
-      if (caught instanceof ApiError && Object.keys(caught.fieldErrors).length > 0) {
-        setErrors({
-          categoryId: caught.fieldError('categoryId') ?? '',
-          limit: caught.fieldError('limit') ?? '',
-          month: caught.fieldError('month') ?? '',
-        })
-      } else {
-        // 409: a budget already exists for this category and month.
-        setPageError(apiMessage(caught, 'The budget could not be added.'))
-      }
-    }
+  const openForm = (next: FormState): void => {
+    setFormKey((key) => key + 1)
+    setForm(next)
   }
 
-  const changed = (message: string): void => {
-    setPageError(undefined)
-    setNotice(message)
+  const saved = (budget: Budget, created: boolean): void => {
+    setForm({ mode: 'closed' })
+    toast.notify('success', created ? 'Budget added' : 'Budget updated', `${budget.type} budget of ${formatMoney(budget.limit)} for ${budget.categoryName} in ${budget.month}.`)
     budgets.reload()
   }
 
+  const confirmDelete = async (): Promise<void> => {
+    if (!deleting) {
+      return
+    }
+
+    setDeleteBusy(true)
+    try {
+      await budgetsApi.remove(deleting.id)
+      toast.notify('success', 'Budget deleted', `The ${deleting.categoryName} budget for ${deleting.month} was removed.`)
+      budgets.reload()
+    } catch (caught: unknown) {
+      toast.notify('error', 'Budget not deleted', caught instanceof ApiError ? (caught.detail ?? caught.title) : 'Please try again.')
+    } finally {
+      setDeleteBusy(false)
+      setDeleting(null)
+    }
+  }
+
+  const list = budgets.data ?? []
+
   return (
-    <section aria-labelledby="budgets-heading">
-      <h2 id="budgets-heading">Budgets</h2>
-      <div className="field month-picker">
-        <label htmlFor="budget-month">Month</label>
-        <input id="budget-month" type="month" value={month} onChange={(event) => event.target.value && setMonth(event.target.value)} />
-      </div>
-      {notice ? <SuccessMessage messages={[notice]} /> : null}
-      {pageError ? <ErrorMessage error={pageError} /> : null}
+    <div className="page">
+      <PageHeader
+        title="Budgets"
+        description="Monthly limits per category. Status: below 80% on track, 80–100% warning, above 100% exceeded."
+        month={month}
+        onMonthChange={onMonthChange}
+        actions={
+          <Button variant="primary" icon="plus" onClick={() => openForm({ mode: 'add' })}>
+            Add budget
+          </Button>
+        }
+      />
 
-      <form className="card form" onSubmit={(event) => void add(event)} noValidate aria-label="Add budget">
-        <h3>Add a budget for {month}</h3>
-        <div className="field">
-          <CategorySelect
-            id="budget-category"
-            label="Category"
-            value={values.categoryId}
-            categories={categories.data ?? []}
-            onChange={(value) => setValues((current) => ({ ...current, categoryId: value }))}
-            describedBy={errors.categoryId ? 'budget-category-error' : undefined}
-            invalid={Boolean(errors.categoryId)}
-          />
-          <FieldError id="budget-category-error" message={errors.categoryId || undefined} />
+      {budgets.loading ? (
+        <div className="card">
+          <LoadingState label="Loading budgets…" />
         </div>
-        <div className="field">
-          <label htmlFor="budget-limit">Limit</label>
-          <input
-            id="budget-limit"
-            inputMode="decimal"
-            value={values.limit}
-            onChange={(event) => setValues((current) => ({ ...current, limit: event.target.value }))}
-            aria-invalid={errors.limit ? true : undefined}
-            aria-describedby={errors.limit ? 'budget-limit-error' : undefined}
-          />
-          <FieldError id="budget-limit-error" message={errors.limit || errors.month || undefined} />
-        </div>
-        <div className="field">
-          <label htmlFor="budget-type">Type</label>
-          <select id="budget-type" value={values.type} onChange={(event) => setValues((current) => ({ ...current, type: event.target.value as BudgetType }))}>
-            <option value="Hard">Hard (reject overspending)</option>
-            <option value="Soft">Soft (warn only)</option>
-          </select>
-        </div>
-        <div className="actions">
-          <button type="submit">Add budget</button>
-        </div>
-      </form>
+      ) : null}
+      {budgets.error ? <ErrorMessage title="Budgets could not be loaded" error={budgets.error} onRetry={budgets.reload} /> : null}
 
-      {budgets.loading ? <LoadingState label="Loading budgets…" /> : null}
-      {budgets.error ? <ErrorMessage error={budgets.error} onRetry={budgets.reload} /> : null}
       {!budgets.loading && budgets.data ? (
-        budgets.data.length === 0 ? (
-          <EmptyState message={`No budgets for ${month}.`} />
+        list.length === 0 ? (
+          <div className="card">
+            <EmptyState
+              icon="budgets"
+              title={`No budgets for ${formatMonthLabel(month)}`}
+              message="Set a Hard budget to block overspending, or a Soft budget to get warnings."
+              action={
+                <Button icon="plus" onClick={() => openForm({ mode: 'add' })}>
+                  Add budget
+                </Button>
+              }
+            />
+          </div>
         ) : (
-          <ul className="budget-list">
-            {budgets.data.map((budget) => (
-              <BudgetRow key={`${budget.id}-${budget.limit}-${budget.type}`} budget={budget} onChanged={changed} onError={setPageError} />
-            ))}
-          </ul>
+          <>
+            <div className="status-summary" aria-label="Budget status counts">
+              {statusOrder.map((status) => (
+                <div key={status} className={`status-tile tile-${status}`}>
+                  <span className="muted">{statusLabels[status]}</span>
+                  <strong>{list.filter((budget) => budget.status === status).length}</strong>
+                </div>
+              ))}
+            </div>
+            <ul className="grid-cards" aria-label="Budgets" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              {list.map((budget) => (
+                <li key={budget.id} className={`card card-hover budget-card is-${budget.status}`}>
+                  <div className="budget-card-head">
+                    <div>
+                      <h3>{budget.categoryName}</h3>
+                      <span className="muted" style={{ fontSize: '0.8rem' }}>
+                        {budget.type} budget · {typeHelp[budget.type]}
+                      </span>
+                    </div>
+                    <div className="row-actions">
+                      <Button size="sm" variant="ghost" icon="edit" iconOnly onClick={() => openForm({ mode: 'edit', budget })}>
+                        {`Edit ${budget.categoryName} budget`}
+                      </Button>
+                      <Button size="sm" variant="ghost" icon="trash" iconOnly onClick={() => setDeleting(budget)}>
+                        {`Delete ${budget.categoryName} budget`}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="budget-amounts">
+                    <strong>{formatMoney(budget.spent)}</strong>
+                    <span className="muted">of {formatMoney(budget.limit)}</span>
+                  </div>
+                  <BudgetProgress percentUsed={budget.percentUsed} status={budget.status} label={`${budget.categoryName} budget used`} />
+                  <div className="budget-stats">
+                    <div>
+                      Spent
+                      <strong>{formatMoney(budget.spent)}</strong>
+                    </div>
+                    <div>
+                      {budget.remaining < 0 ? 'Over by' : 'Remaining'}
+                      <strong>{formatMoney(Math.abs(budget.remaining))}</strong>
+                    </div>
+                    <div>
+                      Limit
+                      <strong>{formatMoney(budget.limit)}</strong>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
         )
       ) : null}
-    </section>
+
+      <BudgetForm key={formKey} state={form} month={month} categories={categories.data ?? []} onClose={() => setForm({ mode: 'closed' })} onSaved={saved} />
+
+      <ConfirmDialog open={deleting !== null} title="Delete budget?" confirmLabel="Delete budget" busy={deleteBusy} onConfirm={() => void confirmDelete()} onCancel={() => setDeleting(null)}>
+        {deleting ? (
+          <p>
+            The {deleting.type} budget for {deleting.categoryName} in {formatMonthLabel(deleting.month)} will be deleted. Expenses are not
+            affected.
+          </p>
+        ) : null}
+      </ConfirmDialog>
+    </div>
   )
 }

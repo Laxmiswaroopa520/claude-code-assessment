@@ -2,6 +2,9 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Category, ExpenseQuery, SortBy, SortDir } from '../types/api'
 import { CategorySelect } from './CategorySelect'
+import { Button } from './ui/Button'
+import { Field } from './ui/Field'
+import { Icon } from './ui/Icon'
 
 interface FilterValues {
   q: string
@@ -20,9 +23,16 @@ function toNumber(text: string): number | undefined {
   return text.trim().length === 0 ? undefined : Number(text)
 }
 
-/** Builds the API query from the filter form. Applied on submit, not on every keystroke. */
+function activeCount(values: FilterValues): number {
+  const keys: (keyof FilterValues)[] = ['categoryId', 'from', 'to', 'minAmount', 'maxAmount']
+  return keys.filter((key) => values[key] !== '').length + (values.sortBy !== 'date' || values.sortDir !== 'desc' ? 1 : 0)
+}
+
+/** Search box plus a collapsible filter panel. Builds the backend query (q, categoryId, from, to, minAmount, maxAmount, sortBy, sortDir). */
 export function ExpenseFilters({ categories, onApply }: { categories: Category[]; onApply: (query: ExpenseQuery) => void }) {
   const [values, setValues] = useState<FilterValues>(empty)
+  const [open, setOpen] = useState<boolean>(false)
+  const count = activeCount(values)
 
   const update = <K extends keyof FilterValues>(field: K, value: FilterValues[K]): void => {
     setValues((current) => ({ ...current, [field]: value }))
@@ -49,50 +59,54 @@ export function ExpenseFilters({ categories, onApply }: { categories: Category[]
   }
 
   return (
-    <form className="card filters" onSubmit={apply} aria-label="Filter expenses">
-      <div className="field">
-        <label htmlFor="filter-q">Search</label>
-        <input id="filter-q" type="search" value={values.q} onChange={(event) => update('q', event.target.value)} placeholder="Title or notes" />
-      </div>
-      <div className="field">
-        <CategorySelect id="filter-category" label="Category" value={values.categoryId} categories={categories} onChange={(value) => update('categoryId', value)} allLabel="All categories" />
-      </div>
-      <div className="field">
-        <label htmlFor="filter-from">From</label>
-        <input id="filter-from" type="date" value={values.from} onChange={(event) => update('from', event.target.value)} />
-      </div>
-      <div className="field">
-        <label htmlFor="filter-to">To</label>
-        <input id="filter-to" type="date" value={values.to} onChange={(event) => update('to', event.target.value)} />
-      </div>
-      <div className="field">
-        <label htmlFor="filter-min">Min amount</label>
-        <input id="filter-min" inputMode="decimal" value={values.minAmount} onChange={(event) => update('minAmount', event.target.value)} />
-      </div>
-      <div className="field">
-        <label htmlFor="filter-max">Max amount</label>
-        <input id="filter-max" inputMode="decimal" value={values.maxAmount} onChange={(event) => update('maxAmount', event.target.value)} />
-      </div>
-      <div className="field">
-        <label htmlFor="filter-sort-by">Sort by</label>
-        <select id="filter-sort-by" value={values.sortBy} onChange={(event) => update('sortBy', event.target.value as SortBy)}>
-          <option value="date">Date</option>
-          <option value="amount">Amount</option>
-          <option value="title">Title</option>
-        </select>
-      </div>
-      <div className="field">
-        <label htmlFor="filter-sort-dir">Direction</label>
-        <select id="filter-sort-dir" value={values.sortDir} onChange={(event) => update('sortDir', event.target.value as SortDir)}>
-          <option value="desc">Descending</option>
-          <option value="asc">Ascending</option>
-        </select>
-      </div>
-      <div className="actions">
-        <button type="submit">Apply filters</button>
-        <button type="button" onClick={reset}>
+    <form onSubmit={apply} aria-label="Filter expenses">
+      <div className="toolbar">
+        <div className="search">
+          <Icon name="search" size={16} />
+          <label htmlFor="filter-q" className="visually-hidden">
+            Search
+          </label>
+          <input id="filter-q" type="search" value={values.q} onChange={(event) => update('q', event.target.value)} placeholder="Search title or notes" />
+        </div>
+        <Button icon="filter" onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-controls="expense-filter-panel">
+          Filters{count > 0 ? ` (${count})` : ''}
+        </Button>
+        <Button type="submit" variant="primary">
+          Apply filters
+        </Button>
+        <Button variant="ghost" onClick={reset}>
           Reset
-        </button>
+        </Button>
+      </div>
+      <div id="expense-filter-panel" className="filter-panel" hidden={!open}>
+        <Field id="filter-category" label="Category">
+          <CategorySelect id="filter-category" value={values.categoryId} categories={categories} onChange={(value) => update('categoryId', value)} allLabel="All categories" />
+        </Field>
+        <Field id="filter-from" label="From">
+          <input id="filter-from" type="date" value={values.from} onChange={(event) => update('from', event.target.value)} />
+        </Field>
+        <Field id="filter-to" label="To">
+          <input id="filter-to" type="date" value={values.to} onChange={(event) => update('to', event.target.value)} />
+        </Field>
+        <Field id="filter-min" label="Min amount">
+          <input id="filter-min" inputMode="decimal" value={values.minAmount} onChange={(event) => update('minAmount', event.target.value)} />
+        </Field>
+        <Field id="filter-max" label="Max amount">
+          <input id="filter-max" inputMode="decimal" value={values.maxAmount} onChange={(event) => update('maxAmount', event.target.value)} />
+        </Field>
+        <Field id="filter-sort-by" label="Sort by">
+          <select id="filter-sort-by" value={values.sortBy} onChange={(event) => update('sortBy', event.target.value as SortBy)}>
+            <option value="date">Date</option>
+            <option value="amount">Amount</option>
+            <option value="title">Title</option>
+          </select>
+        </Field>
+        <Field id="filter-sort-dir" label="Direction">
+          <select id="filter-sort-dir" value={values.sortDir} onChange={(event) => update('sortDir', event.target.value as SortDir)}>
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+          </select>
+        </Field>
       </div>
     </form>
   )

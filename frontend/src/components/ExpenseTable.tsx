@@ -1,45 +1,61 @@
 import type { Expense } from '../types/api'
-import { formatMoney } from '../utils/format'
-import { ConfirmButton } from './ConfirmButton'
+import { formatDate, formatMoney } from '../utils/format'
+import { Button } from './ui/Button'
 
 interface ExpenseTableProps {
   expenses: Expense[]
   onEdit: (expense: Expense) => void
-  onDelete: (expense: Expense) => Promise<void>
+  onDelete: (expense: Expense) => void
+  /** Hide the actions column (for read-only lists such as "recent expenses"). */
+  readOnly?: boolean
 }
 
-export function ExpenseTable({ expenses, onEdit, onDelete }: ExpenseTableProps) {
+export function ExpenseTable({ expenses, onEdit, onDelete, readOnly = false }: ExpenseTableProps) {
   return (
-    <table>
-      <caption className="visually-hidden">Expenses</caption>
-      <thead>
-        <tr>
-          <th scope="col">Date</th>
-          <th scope="col">Title</th>
-          <th scope="col">Category</th>
-          <th scope="col" className="number">Amount</th>
-          <th scope="col">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {expenses.map((expense) => (
-          <tr key={expense.id}>
-            <td>{expense.date}</td>
-            <td>
-              {expense.title}
-              {expense.notes ? <div className="muted">{expense.notes}</div> : null}
-            </td>
-            <td>{expense.categoryName}</td>
-            <td className="number">{formatMoney(expense.amount)}</td>
-            <td className="actions">
-              <button type="button" onClick={() => onEdit(expense)} aria-label={`Edit ${expense.title}`}>
-                Edit
-              </button>
-              <ConfirmButton label="Delete" confirmLabel="Confirm delete" ariaLabel={`Delete ${expense.title}`} onConfirm={() => onDelete(expense)} />
-            </td>
+    <div className="table-wrap">
+      <table className="responsive-table">
+        <caption className="visually-hidden">Expenses</caption>
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Expense</th>
+            <th scope="col">Category</th>
+            <th scope="col" className="amount">Amount</th>
+            {readOnly ? null : (
+              <th scope="col">
+                <span className="visually-hidden">Actions</span>
+              </th>
+            )}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {expenses.map((expense) => (
+            <tr key={expense.id}>
+              <td className="date-cell">{formatDate(expense.date)}</td>
+              <td>
+                <div className="cell-title">{expense.title}</div>
+                {expense.notes ? <div className="cell-sub">{expense.notes}</div> : null}
+              </td>
+              <td>
+                <span className="badge badge-accent">{expense.categoryName}</span>
+              </td>
+              <td className="amount">{formatMoney(expense.amount)}</td>
+              {readOnly ? null : (
+                <td className="row-actions-cell">
+                  <div className="row-actions">
+                    <Button size="sm" variant="ghost" icon="edit" iconOnly onClick={() => onEdit(expense)}>
+                      {`Edit ${expense.title}`}
+                    </Button>
+                    <Button size="sm" variant="ghost" icon="trash" iconOnly onClick={() => onDelete(expense)}>
+                      {`Delete ${expense.title}`}
+                    </Button>
+                  </div>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

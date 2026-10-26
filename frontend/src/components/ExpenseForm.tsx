@@ -6,14 +6,18 @@ import { toIsoDate } from '../utils/format'
 import { validateExpense } from '../utils/validation'
 import type { ExpenseFormValues, FieldErrors } from '../utils/validation'
 import { CategorySelect } from './CategorySelect'
-import { ErrorMessage, FieldError } from './StatusMessages'
+import { ErrorMessage } from './StatusMessages'
+import { DrawerForm } from './ui/Drawer'
+import { Field } from './ui/Field'
+import { fieldA11y } from './ui/fieldA11y'
 
 interface ExpenseFormProps {
+  open: boolean
   categories: Category[]
   /** null = add mode. */
   editing: Expense | null
   onSubmit: (request: ExpenseRequest) => Promise<void>
-  onCancelEdit: () => void
+  onClose: () => void
 }
 
 function initialValues(editing: Expense | null): ExpenseFormValues {
@@ -30,11 +34,16 @@ function initialValues(editing: Expense | null): ExpenseFormValues {
   }
 }
 
-/** Add/edit form. Client checks give instant feedback; API 400 field errors and 422 budget errors are shown too. */
-export function ExpenseForm({ categories, editing, onSubmit, onCancelEdit }: ExpenseFormProps) {
+const fields = ['title', 'amount', 'date', 'categoryId', 'notes']
+
+/**
+ * Add/edit drawer. Client checks give instant feedback; API 400 field errors and the 422 hard-budget rejection
+ * are shown in place, the input is kept, and the drawer only closes after a successful save (done by the caller).
+ */
+export function ExpenseForm({ open, categories, editing, onSubmit, onClose }: ExpenseFormProps) {
   const [values, setValues] = useState<ExpenseFormValues>(() => initialValues(editing))
   const [errors, setErrors] = useState<FieldErrors>({})
-  const [formError, setFormError] = useState<string | undefined>(undefined)
+  const [formError, setFormError] = useState<{ title: string; message: string } | undefined>(undefined)
   const [saving, setSaving] = useState<boolean>(false)
 
   const update = (field: keyof ExpenseFormValues, value: string): void => {
@@ -43,6 +52,10 @@ export function ExpenseForm({ categories, editing, onSubmit, onCancelEdit }: Exp
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault()
+    if (saving) {
+      return
+    }
+
     setFormError(undefined)
     const clientErrors = validateExpense(values, toIsoDate())
     setErrors(clientErrors)
@@ -61,13 +74,10 @@ export function ExpenseForm({ categories, editing, onSubmit, onCancelEdit }: Exp
     setSaving(true)
     try {
       await onSubmit(request)
-      if (!editing) {
-        setValues(initialValues(null))
-      }
     } catch (caught: unknown) {
       if (caught instanceof ApiError) {
         const serverErrors: FieldErrors = {}
-        for (const field of ['title', 'amount', 'date', 'categoryId', 'notes']) {
+        for (const field of fields) {
           const message = caught.fieldError(field)
           if (message) {
             serverErrors[field] = message
@@ -76,75 +86,50 @@ export function ExpenseForm({ categories, editing, onSubmit, onCancelEdit }: Exp
 
         setErrors(serverErrors)
         if (caught.isBudgetRejection) {
-          setFormError(`Hard budget exceeded: ${caught.detail ?? caught.title}`)
+          setFormError({ title: 'Hard budget exceeded', message: caught.detail ?? caught.title })
         } else if (Object.keys(serverErrors).length === 0) {
-          setFormError(caught.detail ?? caught.title)
+          setFormError({ title: 'The expense could not be saved', message: caught.detail ?? caught.title })
         }
       } else {
-        setFormError('The expense could not be saved.')
+        setFormError({ title: 'The expense could not be saved', message: 'Please try again.' })
       }
     } finally {
       setSaving(false)
     }
   }
 
-  const fieldProps = (field: string) => ({
-    'aria-invalid': errors[field] ? true : undefined,
-    'aria-describedby': errors[field] ? `expense-${field}-error` : undefined,
-  })
-
   return (
-    <form className="card form" onSubmit={(event) => void handleSubmit(event)} noValidate aria-label={editing ? 'Edit expense' : 'Add expense'}>
-      <h2>{editing ? 'Edit expense' : 'Add expense'}</h2>
-      {formError ? <ErrorMessage error={formError} /> : null}
+    <DrawerForm
+      open={open}
+      title={editing ? 'Edit expense' : 'Add expense'}
+      description={editing ? `Update “${editing.title}”.` : 'Record a new expense. Budget rules are checked when you save.'}
+      submitLabel={editing ? 'Save changes' : 'Add expense'}
+      saving={saving}
+      onSubmit={(event) => void handleSubmit(event)}
+      onClose={onClose}
+    >
+      {formError ? <ErrorMessage title={formError.title} error={formError.message} /> : null}
 
-      <div className="field">
-        <label htmlFor="expense-title">Title</label>
-        <input id="expense-title" value={values.title} onChange={(event) => update('title', event.target.value)} maxLength={100} {...fieldProps('title')} />
-        <FieldError id="expense-title-error" message={errors.title} />
+      <Field id="expense-title" label="Title" error={errors.title}>
+        <input id="expense-title" value={values.title} onChange={(event) => update('title', event.target.value)} maxLength={100} autoComplete="off" data-autofocus {...fieldA11y('expense-title', errors.title)} />
+      </Field>
+
+      <div className="form-grid two">
+        <Field id="expense-amount" label="Amount" error={errors.amount}>
+          <input id="expense-amount" inputMode="decimal" value={values.amount} onChange={(event) => update('amount', event.target.value)} placeholder="0.00" {...fieldA11y('expense-amount', errors.amount)} />
+        </Field>
+        <Field id="expense-date" label="Date" error={errors.date}>
+          <input id="expense-date" type="date" value={values.date} max={toIsoDate()} onChange={(event) => update('date', event.target.value)} {...fieldA11y('expense-date', errors.date)} />
+        </Field>
       </div>
 
-      <div className="field">
-        <label htmlFor="expense-amount">Amount</label>
-        <input id="expense-amount" inputMode="decimal" value={values.amount} onChange={(event) => update('amount', event.target.value)} {...fieldProps('amount')} />
-        <FieldError id="expense-amount-error" message={errors.amount} />
-      </div>
+      <Field id="expense-categoryId" label="Category" error={errors.categoryId}>
+        <CategorySelect id="expense-categoryId" value={values.categoryId} categories={categories} onChange={(value) => update('categoryId', value)} error={errors.categoryId} />
+      </Field>
 
-      <div className="field">
-        <label htmlFor="expense-date">Date</label>
-        <input id="expense-date" type="date" value={values.date} max={toIsoDate()} onChange={(event) => update('date', event.target.value)} {...fieldProps('date')} />
-        <FieldError id="expense-date-error" message={errors.date} />
-      </div>
-
-      <div className="field">
-        <CategorySelect
-          id="expense-category"
-          label="Category"
-          value={values.categoryId}
-          categories={categories}
-          onChange={(value) => update('categoryId', value)}
-          describedBy={errors.categoryId ? 'expense-categoryId-error' : undefined}
-          invalid={Boolean(errors.categoryId)}
-        />
-        <FieldError id="expense-categoryId-error" message={errors.categoryId} />
-      </div>
-
-      <div className="field">
-        <label htmlFor="expense-notes">Notes (optional)</label>
-        <textarea id="expense-notes" value={values.notes} onChange={(event) => update('notes', event.target.value)} rows={2} {...fieldProps('notes')} />
-        <FieldError id="expense-notes-error" message={errors.notes} />
-      </div>
-
-      <div className="actions">
-        <button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : editing ? 'Save changes' : 'Add expense'}
-        </button>
-        {editing ? (
-          <button type="button" onClick={onCancelEdit}>
-            Cancel
-          </button>
-        ) : null}
-      </div>
-    </form>
+      <Field id="expense-notes" label="Notes (optional)" error={errors.notes} hint="Up to 500 characters.">
+        <textarea id="expense-notes" value={values.notes} onChange={(event) => update('notes', event.target.value)} rows={3} {...fieldA11y('expense-notes', errors.notes, 'Up to 500 characters.')} />
+      </Field>
+    </DrawerForm>
   )
 }

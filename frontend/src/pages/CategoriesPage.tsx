@@ -2,183 +2,189 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { ApiError } from '../api/client'
 import { categoriesApi } from '../api/categories'
-import { ConfirmButton } from '../components/ConfirmButton'
-import { EmptyState, ErrorMessage, FieldError, LoadingState, SuccessMessage } from '../components/StatusMessages'
+import { EmptyState, ErrorMessage, LoadingState } from '../components/StatusMessages'
+import { Button } from '../components/ui/Button'
+import { ConfirmDialog } from '../components/ui/Dialog'
+import { DrawerForm } from '../components/ui/Drawer'
+import { Field } from '../components/ui/Field'
+import { fieldA11y } from '../components/ui/fieldA11y'
+import { useToast } from '../components/ui/toastContext'
 import { useCategories } from '../hooks/useCategories'
+import { PageHeader } from '../layout/PageHeader'
 import type { Category } from '../types/api'
 import { validateCategoryName } from '../utils/validation'
 
-function messageOf(caught: unknown, fallback: string): string {
-  if (caught instanceof ApiError) {
-    return caught.fieldError('name') ?? caught.detail ?? caught.title
-  }
+type FormState = { mode: 'closed' } | { mode: 'add' } | { mode: 'edit'; category: Category }
 
-  return fallback
-}
+function CategoryForm({ state, onClose, onSaved }: { state: FormState; onClose: () => void; onSaved: (category: Category, created: boolean) => void }) {
+  const editing = state.mode === 'edit' ? state.category : null
+  const [name, setName] = useState<string>(editing?.name ?? '')
+  const [description, setDescription] = useState<string>(editing?.description ?? '')
+  const [nameError, setNameError] = useState<string | undefined>(undefined)
+  const [descriptionError, setDescriptionError] = useState<string | undefined>(undefined)
+  const [saving, setSaving] = useState<boolean>(false)
 
-function CategoryRow({ category, onChanged, onError }: { category: Category; onChanged: (message: string) => void; onError: (message: string) => void }) {
-  const [editing, setEditing] = useState<boolean>(false)
-  const [name, setName] = useState<string>(category.name)
-  const [error, setError] = useState<string | undefined>(undefined)
-
-  const save = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+  const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault()
-    const clientError = validateCategoryName(name)
-    setError(clientError)
-    if (clientError) {
+    if (saving) {
       return
     }
 
-    try {
-      await categoriesApi.update(category.id, { name: name.trim(), description: category.description })
-      setEditing(false)
-      onChanged(`Renamed to "${name.trim()}".`)
-    } catch (caught: unknown) {
-      setError(messageOf(caught, 'The category could not be renamed.'))
+    const clientError = validateCategoryName(name)
+    setNameError(clientError)
+    setDescriptionError(description.trim().length > 250 ? 'Description must be at most 250 characters.' : undefined)
+    if (clientError || description.trim().length > 250) {
+      return
     }
-  }
 
-  const remove = async (): Promise<void> => {
+    setSaving(true)
     try {
-      await categoriesApi.remove(category.id)
-      onChanged(`Deleted "${category.name}".`)
+      const body = { name: name.trim(), description: description.trim() || null }
+      const saved = editing ? await categoriesApi.update(editing.id, body) : await categoriesApi.create(body)
+      onSaved(saved, editing === null)
     } catch (caught: unknown) {
-      // 409: the category still has expenses.
-      onError(messageOf(caught, 'The category could not be deleted.'))
+      // 409: another category already has this name (compared case-insensitively).
+      setNameError(caught instanceof ApiError ? (caught.fieldError('name') ?? caught.detail ?? caught.title) : 'The category could not be saved.')
+      if (caught instanceof ApiError) {
+        setDescriptionError(caught.fieldError('description'))
+      }
+    } finally {
+      setSaving(false)
     }
   }
 
   return (
-    <tr>
-      <td>
-        {editing ? (
-          <form onSubmit={(event) => void save(event)} className="inline-form">
-            <label htmlFor={`rename-${category.id}`} className="visually-hidden">
-              New name for {category.name}
-            </label>
-            <input
-              id={`rename-${category.id}`}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              maxLength={50}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? `rename-${category.id}-error` : undefined}
-            />
-            <button type="submit">Save</button>
-            <button
-              type="button"
-              onClick={() => {
-                setEditing(false)
-                setName(category.name)
-                setError(undefined)
-              }}
-            >
-              Cancel
-            </button>
-            <FieldError id={`rename-${category.id}-error`} message={error} />
-          </form>
-        ) : (
-          category.name
-        )}
-      </td>
-      <td>{category.description ?? ''}</td>
-      <td className="actions">
-        {editing ? null : (
-          <button type="button" onClick={() => setEditing(true)} aria-label={`Rename ${category.name}`}>
-            Rename
-          </button>
-        )}
-        <ConfirmButton label="Delete" confirmLabel="Confirm delete" ariaLabel={`Delete ${category.name}`} onConfirm={remove} />
-      </td>
-    </tr>
+    <DrawerForm
+      open={state.mode !== 'closed'}
+      title={editing ? 'Rename category' : 'Add category'}
+      description={editing ? `Change the name or description of “${editing.name}”.` : 'Names are unique, ignoring upper and lower case.'}
+      submitLabel={editing ? 'Save changes' : 'Add category'}
+      saving={saving}
+      onSubmit={(event) => void submit(event)}
+      onClose={onClose}
+    >
+      <Field id="category-name" label="Name" error={nameError}>
+        <input id="category-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={50} autoComplete="off" data-autofocus {...fieldA11y('category-name', nameError)} />
+      </Field>
+      <Field id="category-description" label="Description (optional)" error={descriptionError}>
+        <textarea id="category-description" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={250} rows={3} {...fieldA11y('category-description', descriptionError)} />
+      </Field>
+    </DrawerForm>
   )
 }
 
 export function CategoriesPage() {
   const categories = useCategories()
-  const [name, setName] = useState<string>('')
-  const [description, setDescription] = useState<string>('')
-  const [nameError, setNameError] = useState<string | undefined>(undefined)
-  const [notice, setNotice] = useState<string | undefined>(undefined)
-  const [pageError, setPageError] = useState<string | undefined>(undefined)
+  const toast = useToast()
+  const [form, setForm] = useState<FormState>({ mode: 'closed' })
+  const [formKey, setFormKey] = useState<number>(0)
+  const [deleting, setDeleting] = useState<Category | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState<boolean>(false)
 
-  const add = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
-    event.preventDefault()
-    setPageError(undefined)
-    const clientError = validateCategoryName(name)
-    setNameError(clientError)
-    if (clientError) {
-      return
-    }
-
-    try {
-      const created = await categoriesApi.create({ name: name.trim(), description: description.trim() || null })
-      setName('')
-      setDescription('')
-      setNotice(`Added "${created.name}".`)
-      categories.reload()
-    } catch (caught: unknown) {
-      setNameError(messageOf(caught, 'The category could not be added.'))
-    }
+  const openForm = (next: FormState): void => {
+    setFormKey((key) => key + 1)
+    setForm(next)
   }
 
-  const changed = (message: string): void => {
-    setPageError(undefined)
-    setNotice(message)
+  const saved = (category: Category, created: boolean): void => {
+    setForm({ mode: 'closed' })
+    toast.notify('success', created ? 'Category added' : 'Category updated', `“${category.name}” is saved.`)
     categories.reload()
   }
 
+  const confirmDelete = async (): Promise<void> => {
+    if (!deleting) {
+      return
+    }
+
+    setDeleteBusy(true)
+    try {
+      await categoriesApi.remove(deleting.id)
+      toast.notify('success', 'Category deleted', `“${deleting.name}” and its budgets were removed.`)
+      categories.reload()
+    } catch (caught: unknown) {
+      // 409: the category still has expenses, so the API refuses to delete it.
+      toast.notify('error', 'Category not deleted', caught instanceof ApiError ? (caught.detail ?? caught.title) : 'Please try again.')
+    } finally {
+      setDeleteBusy(false)
+      setDeleting(null)
+    }
+  }
+
   return (
-    <section aria-labelledby="categories-heading">
-      <h2 id="categories-heading">Categories</h2>
-      {notice ? <SuccessMessage messages={[notice]} /> : null}
-      {pageError ? <ErrorMessage error={pageError} /> : null}
+    <div className="page">
+      <PageHeader
+        title="Categories"
+        description="Organise expenses into categories. Categories that still have expenses can't be deleted."
+        actions={
+          <Button variant="primary" icon="plus" onClick={() => openForm({ mode: 'add' })}>
+            Add category
+          </Button>
+        }
+      />
 
-      <form className="card form" onSubmit={(event) => void add(event)} noValidate aria-label="Add category">
-        <div className="field">
-          <label htmlFor="category-name">Name</label>
-          <input
-            id="category-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            maxLength={50}
-            aria-invalid={nameError ? true : undefined}
-            aria-describedby={nameError ? 'category-name-error' : undefined}
-          />
-          <FieldError id="category-name-error" message={nameError} />
+      {categories.loading ? (
+        <div className="card">
+          <LoadingState label="Loading categories…" />
         </div>
-        <div className="field">
-          <label htmlFor="category-description">Description (optional)</label>
-          <input id="category-description" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={250} />
-        </div>
-        <div className="actions">
-          <button type="submit">Add category</button>
-        </div>
-      </form>
-
-      {categories.loading ? <LoadingState label="Loading categories…" /> : null}
-      {categories.error ? <ErrorMessage error={categories.error} onRetry={categories.reload} /> : null}
+      ) : null}
+      {categories.error ? <ErrorMessage title="Categories could not be loaded" error={categories.error} onRetry={categories.reload} /> : null}
       {!categories.loading && categories.data ? (
         categories.data.length === 0 ? (
-          <EmptyState message="No categories yet. Add one above." />
+          <div className="card">
+            <EmptyState
+              icon="categories"
+              title="No categories yet"
+              message="Add your first category to start recording expenses."
+              action={
+                <Button icon="plus" onClick={() => openForm({ mode: 'add' })}>
+                  Add category
+                </Button>
+              }
+            />
+          </div>
         ) : (
-          <table>
-            <caption className="visually-hidden">Categories</caption>
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Description</th>
-                <th scope="col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.data.map((category) => (
-                <CategoryRow key={`${category.id}-${category.name}`} category={category} onChanged={changed} onError={setPageError} />
-              ))}
-            </tbody>
-          </table>
+          <ul className="grid-cards" aria-label="Categories" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+            {categories.data.map((category) => (
+              <li key={category.id} className="card card-hover category-card">
+                <span className={`category-avatar avatar-${category.id % 6}`} aria-hidden="true">
+                  {category.name.charAt(0).toUpperCase()}
+                </span>
+                <div className="category-text">
+                  <h3>{category.name}</h3>
+                  <p>{category.description ?? 'No description'}</p>
+                </div>
+                <div className="row-actions">
+                  <Button size="sm" variant="ghost" icon="edit" iconOnly onClick={() => openForm({ mode: 'edit', category })}>
+                    {`Rename ${category.name}`}
+                  </Button>
+                  <Button size="sm" variant="ghost" icon="trash" iconOnly onClick={() => setDeleting(category)}>
+                    {`Delete ${category.name}`}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
         )
       ) : null}
-    </section>
+
+      <CategoryForm key={formKey} state={form} onClose={() => setForm({ mode: 'closed' })} onSaved={saved} />
+
+      <ConfirmDialog
+        open={deleting !== null}
+        title="Delete category?"
+        confirmLabel="Delete category"
+        busy={deleteBusy}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setDeleting(null)}
+      >
+        {deleting ? (
+          <p>
+            “{deleting.name}” and any budgets set for it will be deleted. If it still has expenses, the API will refuse and nothing is
+            changed.
+          </p>
+        ) : null}
+      </ConfirmDialog>
+    </div>
   )
 }
