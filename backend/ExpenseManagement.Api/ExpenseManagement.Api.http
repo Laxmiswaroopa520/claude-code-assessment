@@ -1,1 +1,153 @@
-@ExpenseManagement.Api_HostAddress = http://localhost:5200
+# Sample requests for every endpoint (FR-18). Run the API first:
+#   dotnet run --project backend/ExpenseManagement.Api --launch-profile http
+# Ids below assume the Development seed data; adjust them to match your database.
+@baseUrl = http://localhost:5200
+@month = 2026-10
+
+### OpenAPI document (Development). Browsable UI: http://localhost:5200/scalar
+GET {{baseUrl}}/openapi/v1.json
+
+### ---------------- Categories (FR-01 to FR-04) ----------------
+
+### List categories (sorted by name)
+GET {{baseUrl}}/api/categories
+
+### Get one category
+GET {{baseUrl}}/api/categories/1
+
+### Get unknown category -> 404 ProblemDetails
+GET {{baseUrl}}/api/categories/9999
+
+### Create category -> 201 + Location
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+
+{ "name": "Education", "description": "Courses and books" }
+
+### Create duplicate (case-insensitive) -> 409
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+
+{ "name": "food" }
+
+### Create with empty name -> 400 errors.Name
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+
+{ "name": "" }
+
+### Rename category
+PUT {{baseUrl}}/api/categories/7
+Content-Type: application/json
+
+{ "name": "Learning", "description": "Courses and books" }
+
+### Delete category that has expenses -> 409
+DELETE {{baseUrl}}/api/categories/1
+
+### Delete category without expenses -> 204
+DELETE {{baseUrl}}/api/categories/7
+
+### ---------------- Expenses (FR-05 to FR-09) ----------------
+
+### List expenses (default: page 1, 20 per page, newest first)
+GET {{baseUrl}}/api/expenses
+
+### Search, filter, sort and page
+GET {{baseUrl}}/api/expenses?q=taxi&categoryId=2&from=2026-10-01&to=2026-10-31&minAmount=10&maxAmount=100&sortBy=amount&sortDir=asc&page=1&pageSize=10
+
+### Invalid query -> 400 (pageSize > 100, sortBy unknown)
+GET {{baseUrl}}/api/expenses?pageSize=101&sortBy=foo
+
+### Get one expense
+GET {{baseUrl}}/api/expenses/1
+
+### Create expense (category without a budget) -> 201, warnings: []
+POST {{baseUrl}}/api/expenses
+Content-Type: application/json
+
+{ "title": "Notebook", "amount": 12.50, "date": "2026-10-10", "categoryId": 4, "notes": "For meetings" }
+
+### Create expense with invalid values -> 400 (Amount, Date, Title)
+POST {{baseUrl}}/api/expenses
+Content-Type: application/json
+
+{ "title": "", "amount": 10.123, "date": "2099-01-01", "categoryId": 4 }
+
+### Create expense in a Soft budget category over the limit -> 201 with warnings[]
+POST {{baseUrl}}/api/expenses
+Content-Type: application/json
+
+{ "title": "Big dinner", "amount": 150.00, "date": "2026-10-10", "categoryId": 1 }
+
+### Create expense that exceeds a Hard budget -> 422 ProblemDetails
+POST {{baseUrl}}/api/expenses
+Content-Type: application/json
+
+{ "title": "Flight", "amount": 500.00, "date": "2026-10-10", "categoryId": 2 }
+
+### Update expense
+PUT {{baseUrl}}/api/expenses/1
+Content-Type: application/json
+
+{ "title": "Groceries (weekly)", "amount": 110.00, "date": "2026-10-01", "categoryId": 1 }
+
+### Delete expense -> 204
+DELETE {{baseUrl}}/api/expenses/20
+
+### ---------------- Budgets (FR-10 to FR-12) ----------------
+
+### List budgets for a month (with spent, remaining, percentUsed, status)
+GET {{baseUrl}}/api/budgets?month={{month}}
+
+### Get one budget
+GET {{baseUrl}}/api/budgets/1
+
+### Create budget -> 201
+POST {{baseUrl}}/api/budgets
+Content-Type: application/json
+
+{ "categoryId": 3, "month": "{{month}}", "limit": 200, "type": "Hard" }
+
+### Create duplicate budget for the same category and month -> 409
+POST {{baseUrl}}/api/budgets
+Content-Type: application/json
+
+{ "categoryId": 3, "month": "{{month}}", "limit": 250, "type": "Soft" }
+
+### Create invalid budget -> 400 (Limit, Month, Type)
+POST {{baseUrl}}/api/budgets
+Content-Type: application/json
+
+{ "categoryId": 3, "month": "2026-13", "limit": 0, "type": "Weekly" }
+
+### Update budget
+PUT {{baseUrl}}/api/budgets/1
+Content-Type: application/json
+
+{ "categoryId": 1, "month": "{{month}}", "limit": 600, "type": "Soft" }
+
+### Delete budget -> 204
+DELETE {{baseUrl}}/api/budgets/3
+
+### ---------------- Summaries (FR-13, FR-14) ----------------
+
+### Monthly totals for a year
+GET {{baseUrl}}/api/summaries/monthly?year=2026
+
+### Category summary for a month (with budget status)
+GET {{baseUrl}}/api/summaries/categories?month={{month}}
+
+### Invalid month -> 400
+GET {{baseUrl}}/api/summaries/categories?month=2026-13
+
+### ---------------- Reports (FR-15, FR-16) ----------------
+
+### JSON report
+GET {{baseUrl}}/api/reports/monthly?month={{month}}&format=json
+
+### CSV download
+GET {{baseUrl}}/api/reports/monthly?month={{month}}&format=csv
+
+### Unsupported format -> 400
+GET {{baseUrl}}/api/reports/monthly?month={{month}}&format=xml

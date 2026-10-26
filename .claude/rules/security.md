@@ -15,7 +15,7 @@
 - Log the exception server-side. Don't log request bodies wholesale.
 
 ## Destructive operations (ask me first)
-- Database: deleting or resetting `expenses.db`, `DROP`, unscoped `DELETE`/`UPDATE`, `dotnet ef database drop`, and removing a migration.
+- Database: deleting or resetting `expense-management.db`, `DROP`, unscoped `DELETE`/`UPDATE`, `dotnet ef database drop`, and removing a migration.
 - Git: `push --force`, `reset --hard`, `clean -fd`, `--no-verify`, rewriting history, deleting branches.
 - File system: recursive deletes (`rm -rf`) and bulk deletes using wildcards.
 

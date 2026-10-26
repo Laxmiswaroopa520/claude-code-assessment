@@ -1,0 +1,72 @@
+== Bash: allowed
+PASS  [0] Bash: ls -la
+PASS  [0] Bash: dotnet build backend && dotnet test backend 2>&1
+PASS  [0] Bash: git status && git log --oneline -3
+PASS  [0] Bash: git push origin main
+PASS  [0] Bash: git clean -n -fd
+PASS  [0] Bash: rm -r tmp-dir
+PASS  [0] Bash: rm -f one-file.txt
+PASS  [0] Bash: echo "a; rm -rf b" > /dev/null
+PASS  [0] Bash: sqlite3 snap.db "DELETE FROM Expenses WHERE Id = 1"
+PASS  [0] Bash: grep -rn Budget "/c/Users/Laxmi Bandaru/claude-code-workshop/backend"
+PASS  [0] Bash: cat "/c/Users/Laxmi Bandaru/claude-code-workshop/CLAUDE.md" > notes-from-demo.txt
+PASS  [0] Bash: cd "/c/Users/Laxmi Bandaru/claude-code-workshop-assessment" && npm --prefix frontend test
+PASS  [0] Bash: ls -la
+== Bash: destructive commands
+PASS  [2] Bash: rm -rf build
+PASS  [2] Bash: rm -fr build
+PASS  [2] Bash: rm -r -f build
+PASS  [2] Bash: rm --recursive --force build
+PASS  [2] Bash: ls && rm -Rf "dir with spaces"
+PASS  [2] Bash: echo "quoted; part" ; /usr/bin/rm -rf x
+PASS  [2] Bash: git reset --hard HEAD~1
+PASS  [2] Bash: git push --force
+PASS  [2] Bash: git push -f origin main
+PASS  [2] Bash: git push --force-with-lease origin main
+PASS  [2] Bash: git clean -fd
+PASS  [2] Bash: git clean -f
+PASS  [2] Bash: git commit --no-verify -m "skip hooks"
+PASS  [2] Bash: git push --no-verify origin main
+PASS  [2] Bash: sqlite3 snap.db "DROP TABLE Expenses"
+PASS  [2] Bash: sqlite3 snap.db "drop database x"
+PASS  [2] Bash: sqlite3 snap.db "DELETE FROM Expenses"
+PASS  [2] Bash: sqlite3 snap.db "DELETE FROM A WHERE Id = 1; DELETE FROM B"
+PASS  [2] Bash: dotnet ef database drop --project backend/ExpenseManagement.Api
+PASS  [2] Bash: dotnet ef --project backend/ExpenseManagement.Api database drop -f
+PASS  [2] Bash: newline-separated rm -rf
+== Bash: read-only demo folder
+PASS  [2] Bash: rm "/c/Users/Laxmi Bandaru/claude-code-workshop/CLAUDE.md"
+PASS  [2] Bash: echo x > "/c/Users/Laxmi Bandaru/claude-code-workshop/new.txt"
+PASS  [2] Bash: cp "/c/Users/Laxmi Bandaru/claude-code-workshop/CLAUDE.md" .
+PASS  [2] Bash: cd "/c/Users/Laxmi Bandaru/claude-code-workshop" && npm install
+PASS  [2] Bash: git -C "/c/Users/Laxmi Bandaru/claude-code-workshop" status
+PASS  [2] Bash: touch a.txt
+PASS  [2] Bash: echo x > relative.txt
+== Edit/Write: allowed
+PASS  [0] Edit: C:\Users\Laxmi Bandaru\claude-code-workshop-assessment\backend\ExpenseManagement.Api\Program.cs
+PASS  [0] Write: C:\Users\Laxmi Bandaru\claude-code-workshop-assessment\.env.example
+PASS  [0] Write: docs/notes.md
+PASS  [0] Write: /c/Users/Laxmi Bandaru/claude-code-workshop-assessment/frontend/src/App.tsx
+== Edit/Write: blocked
+PASS  [2] Edit: C:\Users\Laxmi Bandaru\claude-code-workshop\CLAUDE.md
+PASS  [2] Write: /c/Users/Laxmi Bandaru/claude-code-workshop/CLAUDE.md
+PASS  [2] Write: C:\Windows\Temp\outside.txt
+PASS  [2] Write: ../outside.txt
+PASS  [2] Write: C:\Users\Laxmi Bandaru\claude-code-workshop-assessment\.env
+PASS  [2] Write: C:\Users\Laxmi Bandaru\claude-code-workshop-assessment\frontend\.env.local
+PASS  [2] Write: C:\Users\Laxmi Bandaru\claude-code-workshop-assessment\backend\ExpenseManagement.Api\expenses.db
+PASS  [2] Write: C:\Users\Laxmi Bandaru\claude-code-workshop-assessment\backend\ExpenseManagement.Api\expenses.db-wal
+PASS  [2] Edit: C:\Users\Laxmi Bandaru\claude-code-workshop-assessment\backend\ExpenseManagement.Api\Migrations\20261026_Initial.cs
+PASS  [2] Edit: C:\Users\Laxmi Bandaru\claude-code-workshop-assessment\backend\ExpenseManagement.Api\migrations\AppDbContextModelSnapshot.cs
+== Fail-open and other tools
+PASS  [0] invalid JSON
+PASS  [0] missing tool_input
+PASS  [0] unrelated tool (Read)
+== Log file
+PASS  log has 38 BLOCK lines (expected 38), 20 ALLOW lines
+-- sample log lines:
+2026-10-26T10:24:21.381Z | pre-guard | BLOCK | Bash | rm with recursive + force flags (rm -rf and variants) is not allowed.
+2026-10-26T10:24:23.300Z | pre-guard | BLOCK | Bash | rm with recursive + force flags (rm -rf and variants) is not allowed.
+2026-10-26T10:24:25.131Z | pre-guard | BLOCK | Bash | rm with recursive + force flags (rm -rf and variants) is not allowed.
+
+RESULT: 59 passed, 0 failed

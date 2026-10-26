@@ -38,11 +38,11 @@ cd frontend && npm run build                                         # also type
 
 ## 4. Database
 
-- **File:** `expenses.db` in `backend/ExpenseManagement.Api/`. It's git-ignored. *(Planned: the connection string isn't configured yet.)*
+- **File:** `expense-management.db` in `backend/ExpenseManagement.Api/`. It's git-ignored. *(Planned: the connection string isn't configured yet.)*
 - **Create a migration:** `dotnet ef migrations add <Name> --project backend/ExpenseManagement.Api`
 - **Apply:** `dotnet ef database update --project backend/ExpenseManagement.Api`. The API does **not** migrate on startup.
 - **Never hand-edit `Migrations/`.** Change the model or configuration, then generate a new migration.
-- **Never delete or reset `expenses.db`, or drop tables, without asking me first.**
+- **Never delete or reset `expense-management.db`, or drop tables, without asking me first.**
 - Tests use their own in-memory SQLite (`DataSource=:memory:`) and must never open the dev database.
 
 ## 5. Architecture

@@ -14,7 +14,7 @@ paths:
 
 ## Database isolation
 - Integration tests use `WebApplicationFactory<Program>` with a dedicated `SqliteConnection("DataSource=:memory:")`
-  that stays open for the factory's lifetime. Never use a file path, never use `expenses.db`, and never share a connection between test classes.
+  that stays open for the factory's lifetime. Never use a file path, never use `expense-management.db`, and never share a connection between test classes.
 - Each test seeds the data it needs. Never depend on another test's data or on run order.
 - Unit tests for validators and `BudgetCalculator` use no database. Use a fixed `TimeProvider` for anything that depends on "today".
 

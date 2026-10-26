@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Stack** | ASP.NET Core Web API (.NET 10, controllers) · EF Core + SQLite · xUnit · React + TypeScript (Vite) · Vitest |
-| **Base URL** | `http://localhost:5000/api` (local only) |
+| **Base URL** | `http://localhost:5200/api` (local only) |
 | **Errors** | RFC 7807 `application/problem+json` (see §4) |
 | **Evidence** | Screenshots and logs go in `docs/evidence/` |
 
@@ -207,7 +207,7 @@ Each acceptance criterion (AC) is written as **input → status → result** and
 | 4 | **Skill: project-specific** | `add-expense-feature`: the project workflow for a new FR (DTO → validator → service → controller → migration if needed → tests → `.http` sample → client hook), following this repo's layout. | `SKILL.md` is present. A screenshot shows it used to implement a feature such as FR-16 CSV. |
 | 5 | **Subagent 1** | `code-reviewer` (read-only tools): reviews diffs against CLAUDE.md, the rules and this requirements document, and flags layering or validation gaps. | `.claude/agents/code-reviewer.md` exists. A screenshot shows its review output on a change. |
 | 6 | **Subagent 2** | `test-runner`: runs `dotnet test` and `npm test`, summarizes failures and maps them back to FR/AC IDs. | `.claude/agents/test-runner.md` exists. A screenshot shows its summary. |
-| 7 | **MCP integration** | SQLite MCP server configured in `.mcp.json` so Claude can inspect the schema and data in `expenses.db` (to verify migrations, seed data and budget totals). | `.mcp.json` is present. A screenshot shows a `/mcp` connection and a query result. |
+| 7 | **MCP integration** | SQLite MCP server configured in `.mcp.json` so Claude can inspect the schema and data in `expense-management.db` (to verify migrations, seed data and budget totals). | `.mcp.json` is present. A screenshot shows a `/mcp` connection and a query result. |
 | 8 | **Pre-hook** (`PreToolUse`) | Blocks edits to secrets or generated files (`.env*`, `*.db`, `Migrations/*` edited by hand) and dangerous Bash (`rm -rf`, `git push --force`). It exits 2 with a reason. | The hook script and settings entry are present. A screenshot shows a blocked attempt. |
 | 9 | **Post-hook** (`PostToolUse`) | After `Edit`/`Write` on `*.cs`, runs `dotnet format --include <file>` and `dotnet build`. For `*.ts(x)`, runs `npx prettier`/`tsc --noEmit`. Failures are reported back to Claude. | The hook script is present. A screenshot shows automatic formatting or a build error being fixed. |
 | 10 | **Cognine Marketplace plugin** | Add the Cognine marketplace (`/plugin marketplace add …`) and install the plugin named in the course material. Use it during development. | `/plugin` list screenshot plus usage output. The plugin name and source are recorded in the README. |

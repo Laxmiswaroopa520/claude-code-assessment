@@ -626,18 +626,29 @@ static class HookLog
 {
     public static void Write(string? projectDir, string decision, string tool, string reason)
     {
-        if (string.IsNullOrWhiteSpace(projectDir))
+        // PRE_GUARD_LOG_FILE lets the hook tests log to a temp file instead of the real hooks.log.
+        string? logFile = Environment.GetEnvironmentVariable("PRE_GUARD_LOG_FILE");
+        if (string.IsNullOrWhiteSpace(logFile))
         {
-            return;
+            if (string.IsNullOrWhiteSpace(projectDir))
+            {
+                return;
+            }
+
+            logFile = Path.Combine(projectDir, ".claude", "logs", "hooks.log");
         }
 
         try
         {
-            string logDirectory = Path.Combine(projectDir, ".claude", "logs");
-            Directory.CreateDirectory(logDirectory);
+            string? logDirectory = Path.GetDirectoryName(logFile);
+            if (!string.IsNullOrEmpty(logDirectory))
+            {
+                Directory.CreateDirectory(logDirectory);
+            }
+
             string safeReason = reason.Replace('\r', ' ').Replace('\n', ' ').Replace('|', '/');
             string line = $"{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ss.fffZ} | pre-guard | {decision} | {tool} | {safeReason}{Environment.NewLine}";
-            File.AppendAllText(Path.Combine(logDirectory, "hooks.log"), line, new UTF8Encoding(false));
+            File.AppendAllText(logFile, line, new UTF8Encoding(false));
         }
         catch (IOException)
         {

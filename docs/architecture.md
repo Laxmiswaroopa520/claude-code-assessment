@@ -14,7 +14,7 @@ This is a **design document**; nothing here exists yet. Sources: `requirements.m
         ▼
  AppDbContext ─────── EF Core: entity config (Fluent API), queries, SaveChangesAsync
         ▼
- SQLite ───────────── expenses.db (local dev, git-ignored) · tests use in-memory SQLite (§6)
+ SQLite ───────────── expense-management.db (local dev, git-ignored) · tests use in-memory SQLite (§6)
 ```
 
 | Concern | Where it lives |
@@ -135,7 +135,7 @@ This is acceptable because the app is local and single-user with a bounded datas
 **Database isolation:**
 - `TestApiFactory` removes the app's `DbContextOptions<AppDbContext>` registration. It registers a dedicated `SqliteConnection("DataSource=:memory:")` that stays open for the factory's lifetime, and applies the migrations to it.
 - Each test class gets its own factory and connection and seeds its own data. Nothing is shared between test classes.
-- The factory runs in the `Testing` environment. The API **never migrates at startup** (FR-17: `dotnet ef database update` creates the dev DB). A guard fails the test run if the connection string isn't `:memory:`, so tests can't touch `expenses.db`.
+- The factory runs in the `Testing` environment. The API **never migrates at startup** (FR-17: `dotnet ef database update` creates the dev DB). A guard fails the test run if the connection string isn't `:memory:`, so tests can't touch `expense-management.db`.
 - "Today" comes from an injected `TimeProvider`. Tests substitute a fixed clock written by hand (no extra package).
 
 ## 7. Decisions and constraints

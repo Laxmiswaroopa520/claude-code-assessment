@@ -1,0 +1,738 @@
+ ▐▛███▛█   Claude Code v2.1.310
+▝▜██████▀  Opus 5.5 · Claude Team
+ ▝▝   ▝▝   ~\claude-code-workshop-assessment
+
+  Opus 5.5 is now your default model and it draws down usage faster than Sonnet 5. Switch anytime with /model.
+
+> ou are helping me build the AICC102 Expense Management API assessment         
+  project.                                                                      
+  This is a read-only environment check. Do not create, modify, or install      
+  anything.                                                                     
+                                                                                
+  1. Confirm the current working directory is C:\Users\Laxmi                    
+  Bandaru\claude-code-assessment and list its contents.                         
+  2. Run and report the output of:                                              
+     claude --version, dotnet --version, dotnet --list-sdks, dotnet tool list   
+  -g,                                                                           
+     node -v, npm -v, git --version, sqlite3 --version                          
+  3. Tell me which shell you are using for the Bash tool on this Windows        
+  machine.                                                                      
+  4. Present a table: Tool | Required | Found version | Status (OK / MISSING /  
+  TOO OLD).                                                                     
+     Requirements: .NET SDK 10.x, Node 20+, Git, sqlite3, dotnet-ef global      
+  tool.                                                                         
+  5. For anything missing, give me the exact install command but DO NOT run it. 
+     Report real command output only. If a command fails, show the error.       
+
+● Login expired · Please run /login
+
+✻ Baked for 0s · done 2:32 PM
+
+> /login 
+  ⎿  Login successful
+
+  Ran 1 shell command (ctrl+o to expand)
+  ⎿  3 skills available
+
+● I ran the checks without changing anything. Every required tool is installed
+  and new enough, but the working directory isn't the one you named.
+
+  1. Working directory: not the one you named
+
+  - Expected: C:\Users\Laxmi Bandaru\claude-code-assessment
+  - Actual: C:\Users\Laxmi Bandaru\claude-code-workshop-assessment
+  - The path you gave doesn't exist: ls: cannot access '/c/Users/Laxmi 
+    Bandaru/claude-code-assessment': No such file or directory
+  - Contents of the current directory: only a .claude/ folder. There are no
+    project files yet, and it isn't a git repository.
+
+  2. Command output
+
+  claude --version     → 2.1.310 (Claude Code)
+  dotnet --version     → 10.0.100
+  dotnet --list-sdks   → 6.0.428 [C:\Program Files\dotnet\sdk]
+                         8.0.420 [C:\Program Files\dotnet\sdk]
+                         9.0.304 [C:\Program Files\dotnet\sdk]
+                         10.0.100 [C:\Program Files\dotnet\sdk]
+  dotnet tool list -g  → Package Id   Version   Commands
+                         dotnet-ef    10.0.11   dotnet-ef
+  node -v              → v24.15.0
+  npm -v               → 11.12.1
+  git --version        → git version 2.54.0.windows.1
+  sqlite3 --version    → 3.53.4 2026-07-24 19:02:57 bf7c7f30...459bcc (64-bit)
+  Every command exited with code 0.
+
+  3. Shell
+
+  The Bash tool runs GNU bash 5.3.9(1)-release (x86_64-pc-cygwin) from Git for
+  Windows (SHELL=/bin/bash.exe). It uses POSIX paths like /c/Users/....
+  PowerShell 5.1 is also available as a separate tool.
+
+  4. Summary
+
+  ┌────────────────┬───────────────┬──────────────────────────────┬────────┐
+  │      Tool      │   Required    │        Found version         │ Status │
+  ├────────────────┼───────────────┼──────────────────────────────┼────────┤
+  │ .NET SDK       │ 10.x          │ 10.0.100 (6, 8 and 9 also    │ OK     │
+  │                │               │ installed)                   │        │
+  ├────────────────┼───────────────┼──────────────────────────────┼────────┤
+  │ Node.js        │ 20+           │ v24.15.0                     │ OK     │
+  ├────────────────┼───────────────┼──────────────────────────────┼────────┤
+  │ npm            │ (comes with   │ 11.12.1                      │ OK     │
+  │                │ Node)         │                              │        │
+  ├────────────────┼───────────────┼──────────────────────────────┼────────┤
+  │ Git            │ any           │ 2.54.0.windows.1             │ OK     │
+  ├────────────────┼───────────────┼──────────────────────────────┼────────┤
+  │ sqlite3        │ any           │ 3.53.4                       │ OK     │
+  ├────────────────┼───────────────┼──────────────────────────────┼────────┤
+  │ dotnet-ef      │ installed     │ 10.0.11                      │ OK     │
+  │ (global)       │               │                              │        │
+  ├────────────────┼───────────────┼──────────────────────────────┼────────┤
+  │ Claude Code    │ —             │ 2.1.310                      │ OK     │
+  └────────────────┴───────────────┴──────────────────────────────┴────────┘
+
+  5. Missing tools
+
+  None, so there's nothing to install.
+
+  Next step: decide where the project should live. Either use the existing
+  claude-code-workshop-assessment folder, or create claude-code-assessment and
+  start Claude Code from inside it. I haven't created anything.
+
+✻ Churned for 1m 23s · done 2:33 PM
+
+> Analyze the AICC102 Expense Management API assignment and write               
+  docs/requirements.md.                                                         
+  Create only the docs/ and docs/evidence/ folders and that one file. Nothing   
+  else.                                                                         
+                                                                                
+  Assignment scope:                                                             
+  - Expense CRUD; category management (categories are database records with     
+  CRUD);                                                                        
+  - date and amount validation; budgets per category per month with             
+  spending-limit validation                                                     
+    (Hard budget = reject with 422, Soft budget = accept and return a warning); 
+  - monthly totals and category-wise summaries; search, filtering, sorting and  
+  paging;                                                                       
+  - report generation (JSON and CSV); consistent error handling (RFC 7807       
+  ProblemDetails);                                                              
+  - SQLite persistence with EF Core migrations; automated tests; API docs and   
+  sample requests;                                                              
+  - a lean React + TypeScript client.                                           
+    Stack: ASP.NET Core Web API (.NET 10, controllers), EF Core + SQLite,       
+  xUnit, React + TypeScript (Vite), Vitest.                                     
+    Mandatory Claude Code features: CLAUDE.md, rules, 2 skills (1 reusable, 1   
+  project-specific),                                                            
+    2 subagents, 1+ MCP integration, 1 pre-hook + 1 post-hook, Cognine          
+  Marketplace plugin.                                                           
+                                                                                
+  The document must contain:                                                    
+  1. Functional requirements, numbered FR-01..., each with testable acceptance  
+  criteria                                                                      
+     (inputs, expected HTTP status, expected result).                           
+  2. Validation rules with exact limits: amount > 0 and <= 1,000,000 with max 2 
+  decimals;                                                                     
+     date required and not in the future; title 1–100 chars; category name      
+  unique, 1–50 chars;                                                           
+     budget limit > 0; one budget per category per month.                       
+  3. Business rules: budget status thresholds (OnTrack < 80%, Warning 80–100%,  
+  Exceeded > 100%),                                                             
+     category with expenses cannot be deleted (409).                            
+  4. Non-functional requirements (local only, no secrets in git, layered        
+  design, explicit C# types).                                                   
+  5. Out of scope (authentication, multi-user, currencies).                     
+  6. A table mapping each mandatory Claude Code feature to how it will be used  
+  and demonstrated.                                                             
+     Keep it concise. Show me the file when done.                               
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Write(docs\requirements.md)
+  ⎿  Wrote 223 lines to docs\requirements.md
+       1 # AICC102 — Expense Management API: Requirements
+       2 
+       3 | | |
+       4 |---|---|
+       5 | **Stack** | ASP.NET Core Web API (.NET 10, controllers) · EF C
+       6 | **Base URL** | `http://localhost:5000/api` (local only) |
+       7 | **Errors** | RFC 7807 `application/problem+json` (see §4) |
+       8 | **Evidence** | Screenshots and logs go in `docs/evidence/` |
+       9 
+      10 ---
+     … +358 lines (ctrl+o to expand)
+
+● I wrote docs/requirements.md in C:\Users\Laxmi 
+  Bandaru\claude-code-workshop-assessment. I created only docs/, docs/evidence/
+  (empty) and that one file. Nothing else was created, installed or committed.
+
+  Where your brief didn't specify something, I filled it in and listed those
+  choices in §9 Assumptions. Please check these:
+  - Spending exactly at a hard limit is accepted; only going over returns 422.
+  - An expense with an unknown category returns 400, not 404.
+  - "Not in the future" is measured against today's date in UTC.
+  - A soft budget also warns once spending reaches 80%.
+  - Cognine plugin: I don't know which plugin the course specifies, so row 10 of
+    the feature table says to use the one named in the course material. Tell me
+    the name and I'll put it in.
+
+  Here is the file:
+
+  ---
+
+  AICC102 — Expense Management API: Requirements
+
+  ┌──────────┬───────────────────────────────────────────────────────────────┐
+  │          │                                                               │
+  ├──────────┼───────────────────────────────────────────────────────────────┤
+  │ Stack    │ ASP.NET Core Web API (.NET 10, controllers) · EF Core +       │
+  │          │ SQLite · xUnit · React + TypeScript (Vite) · Vitest           │
+  ├──────────┼───────────────────────────────────────────────────────────────┤
+  │ Base URL │ http://localhost:5000/api (local only)                        │
+  ├──────────┼───────────────────────────────────────────────────────────────┤
+  │ Errors   │ RFC 7807 application/problem+json (see §4)                    │
+  ├──────────┼───────────────────────────────────────────────────────────────┤
+  │ Evidence │ Screenshots and logs go in docs/evidence/                     │
+  └──────────┴───────────────────────────────────────────────────────────────┘
+
+  1. Domain model
+
+  ┌──────────┬───────────────────────────────────────────────────────────────┐
+  │  Entity  │                            Fields                             │
+  ├──────────┼───────────────────────────────────────────────────────────────┤
+  │ Category │ Id (int), Name (string, unique), Description (string?, ≤ 250) │
+  ├──────────┼───────────────────────────────────────────────────────────────┤
+  │          │ Id (int), Title (string), Amount (decimal(18,2)), Date        │
+  │ Expense  │ (DateOnly), CategoryId (int, FK), Notes (string?, ≤ 500),     │
+  │          │ CreatedAt (DateTime UTC)                                      │
+  ├──────────┼───────────────────────────────────────────────────────────────┤
+  │ Budget   │ Id (int), CategoryId (int, FK), Month (string YYYY-MM), Limit │
+  │          │  (decimal(18,2)), Type (enum Hard | Soft)                     │
+  └──────────┴───────────────────────────────────────────────────────────────┘
+
+  BudgetStatus enum: OnTrack | Warning | Exceeded.
+
+  2. Validation rules
+
+  A validation failure returns 400 with a ValidationProblemDetails body. Its
+  errors dictionary is keyed by field name.
+
+  ┌───────┬────────────────────┬─────────────────────────────────────────────┐
+  │  ID   │       Field        │                    Rule                     │
+  ├───────┼────────────────────┼─────────────────────────────────────────────┤
+  │ VR-01 │ Expense.Amount     │ Required. Must be > 0 and ≤ 1,000,000, with │
+  │       │                    │  at most 2 decimal places.                  │
+  ├───────┼────────────────────┼─────────────────────────────────────────────┤
+  │ VR-02 │ Expense.Date       │ Required. A valid YYYY-MM-DD date that is   │
+  │       │                    │ not later than today (UTC).                 │
+  ├───────┼────────────────────┼─────────────────────────────────────────────┤
+  │ VR-03 │ Expense.Title      │ Required. 1–100 characters after trimming;  │
+  │       │                    │ whitespace-only is rejected.                │
+  ├───────┼────────────────────┼─────────────────────────────────────────────┤
+  │       │                    │ Required. Must refer to an existing         │
+  │ VR-04 │ Expense.CategoryId │ category (an unknown ID is a 400 on the     │
+  │       │                    │ field).                                     │
+  ├───────┼────────────────────┼─────────────────────────────────────────────┤
+  │       │                    │ Required. 1–50 characters after trimming.   │
+  │ VR-05 │ Category.Name      │ Unique, case-insensitive. A duplicate       │
+  │       │                    │ returns 409.                                │
+  ├───────┼────────────────────┼─────────────────────────────────────────────┤
+  │ VR-06 │ Budget.Limit       │ Required. Must be > 0, with at most 2       │
+  │       │                    │ decimal places.                             │
+  ├───────┼────────────────────┼─────────────────────────────────────────────┤
+  │ VR-07 │ Budget.Month       │ Required. Format YYYY-MM with month 01–12.  │
+  ├───────┼────────────────────┼─────────────────────────────────────────────┤
+  │ VR-08 │ Budget uniqueness  │ Only one budget per (CategoryId, Month). A  │
+  │       │                    │ duplicate returns 409.                      │
+  ├───────┼────────────────────┼─────────────────────────────────────────────┤
+  │ VR-09 │ Budget.Type        │ Required. Must be Hard or Soft.             │
+  ├───────┼────────────────────┼─────────────────────────────────────────────┤
+  │ VR-10 │ Query: paging      │ page ≥ 1 (default 1). pageSize 1–100        │
+  │       │                    │ (default 20).                               │
+  ├───────┼────────────────────┼─────────────────────────────────────────────┤
+  │ VR-11 │ Query: ranges      │ from must be ≤ to, and minAmount must be ≤  │
+  │       │                    │ maxAmount. Violations return 400.           │
+  ├───────┼────────────────────┼─────────────────────────────────────────────┤
+  │       │                    │ sortBy ∈ {date, amount, title} (default     │
+  │ VR-12 │ Query: sort        │ date). sortDir ∈ {asc, desc} (default       │
+  │       │                    │ desc).                                      │
+  └───────┴────────────────────┴─────────────────────────────────────────────┘
+
+  3. Business rules
+
+  ┌───────┬──────────────────────────────────────────────────────────────────┐
+  │  ID   │                               Rule                               │
+  ├───────┼──────────────────────────────────────────────────────────────────┤
+  │       │ Budget status. pct = spent / limit × 100 for a category in a     │
+  │ BR-01 │ month. If pct < 80 the status is OnTrack. If 80 ≤ pct ≤ 100 it   │
+  │       │ is Warning. If pct > 100 it is Exceeded.                         │
+  ├───────┼──────────────────────────────────────────────────────────────────┤
+  │       │ Hard budget. A create or update that would make the month's      │
+  │ BR-02 │ spending for the category greater than the limit is rejected     │
+  │       │ with 422 and nothing is saved. Spending exactly equal to the     │
+  │       │ limit is allowed.                                                │
+  ├───────┼──────────────────────────────────────────────────────────────────┤
+  │       │ Soft budget. The same situation is accepted (201/200) and the    │
+  │ BR-03 │ response includes a warnings[] entry, e.g. "Budget exceeded for  │
+  │       │ 'Food' in 2026-10: 1,050.00 / 1,000.00". A warning is also       │
+  │       │ returned when the status moves into Warning.                     │
+  ├───────┼──────────────────────────────────────────────────────────────────┤
+  │       │ Budget check on update. The check excludes the expense's         │
+  │ BR-04 │ previous amount. It also applies to the target category and      │
+  │       │ month when an update moves the expense to a different category   │
+  │       │ or month.                                                        │
+  ├───────┼──────────────────────────────────────────────────────────────────┤
+  │ BR-05 │ No budget. If the category has no budget for the month, the      │
+  │       │ expense is always accepted and no warning is returned.           │
+  ├───────┼──────────────────────────────────────────────────────────────────┤
+  │       │ Category delete guard. A category that has expenses cannot be    │
+  │ BR-06 │ deleted and returns 409. Deleting a category that has no         │
+  │       │ expenses also deletes its budgets.                               │
+  ├───────┼──────────────────────────────────────────────────────────────────┤
+  │ BR-07 │ Money. Amounts are stored as decimal(18,2) and calculations use  │
+  │       │ decimal, never double.                                           │
+  ├───────┼──────────────────────────────────────────────────────────────────┤
+  │ BR-08 │ Month boundaries. An expense belongs to the month of its Date    │
+  │       │ (calendar month, UTC).                                           │
+  └───────┴──────────────────────────────────────────────────────────────────┘
+
+  4. Error handling
+
+  ┌───────────────────────┬────────┬────────────────────────────────────────┐
+  │       Situation       │ Status │                  Body                  │
+  ├───────────────────────┼────────┼────────────────────────────────────────┤
+  │ Validation failure    │ 400    │ ValidationProblemDetails with errors   │
+  ├───────────────────────┼────────┼────────────────────────────────────────┤
+  │ Resource not found    │ 404    │ ProblemDetails, title: "Not Found"     │
+  ├───────────────────────┼────────┼────────────────────────────────────────┤
+  │ Duplicate category    │        │                                        │
+  │ name or duplicate     │ 409    │ ProblemDetails with a detail           │
+  │ budget, category in   │        │ explaining the conflict                │
+  │ use                   │        │                                        │
+  ├───────────────────────┼────────┼────────────────────────────────────────┤
+  │                       │        │ ProblemDetails with extensions         │
+  │ Hard budget exceeded  │ 422    │ categoryId, month, limit,              │
+  │                       │        │ currentSpent, attemptedAmount          │
+  ├───────────────────────┼────────┼────────────────────────────────────────┤
+  │ Unhandled exception   │ 500    │ ProblemDetails without a stack trace.  │
+  │                       │        │ The traceId extension is included.     │
+  └───────────────────────┴────────┴────────────────────────────────────────┘
+
+  Every error body has type, title, status, instance and traceId. Errors are
+  produced in one place, through AddProblemDetails and an exception handler, not
+  in each controller.
+
+  5. Functional requirements
+
+  Each acceptance criterion (AC) is written as input → status → result and
+  corresponds to at least one automated test.
+
+  Categories
+
+  FR-01 Create category. POST /api/categories
+  - AC1: {"name":"Food"} → 201. The response contains the body with an id and a
+    Location header.
+  - AC2: {"name":""} or a 51-character name → 400 with errors.Name.
+  - AC3: {"name":"food"} when "Food" already exists → 409.
+
+  FR-02 List and get categories. GET /api/categories, GET /api/categories/{id}
+  - AC1: A list request → 200 with an array sorted by name.
+  - AC2: An unknown id → 404 ProblemDetails.
+
+  FR-03 Update category. PUT /api/categories/{id}
+  - AC1: A valid new name → 200 with the updated record.
+  - AC2: A name that duplicates another category → 409. An unknown id → 404.
+
+  FR-04 Delete category. DELETE /api/categories/{id}
+  - AC1: A category with no expenses → 204. A later GET → 404.
+  - AC2: A category with ≥ 1 expense → 409, and the category still exists.
+
+  Expenses
+
+  FR-05 Create expense. POST /api/expenses
+  - AC1: A valid body (title, amount 12.50, today's date, existing categoryId) →
+    201 with the expense, warnings: [] and a Location header.
+  - AC2: Each of amount 0, −1, 1000000.01, 10.123, a future date, a missing
+    date, an empty title or a 101-character title → 400 naming the field.
+  - AC3: An unknown categoryId → 400 with errors.CategoryId.
+
+  FR-06 Get expense. GET /api/expenses/{id}
+  - AC1: An existing id → 200. An unknown id → 404.
+
+  FR-07 Update expense. PUT /api/expenses/{id}
+  - AC1: A valid body → 200 with the updated expense and warnings.
+  - AC2: An invalid body → 400. An unknown id → 404.
+
+  FR-08 Delete expense. DELETE /api/expenses/{id}
+  - AC1: An existing id → 204. A repeated delete → 404.
+
+  FR-09 Search, filter, sort, page. GET /api/expenses?q=&categoryId=&from=&to=&m
+  inAmount=&maxAmount=&sortBy=&sortDir=&page=&pageSize=
+  - AC1: No parameters → 200 with { items, page:1, pageSize:20, totalCount, 
+    totalPages }, sorted by date descending.
+  - AC2: q=taxi matches a case-insensitive substring of the title or notes. Each
+    other filter narrows the results, and filters combine with AND.
+  - AC3: sortBy=amount&sortDir=asc → items sorted by amount ascending.
+  - AC4: pageSize=101, page=0, from later than to, or sortBy=foo → 400.
+  - AC5: A page beyond the last page → 200 with empty items and the correct
+    totalCount.
+
+  Budgets
+
+  FR-10 Budget CRUD. POST/GET/PUT/DELETE /api/budgets[/{id}], plus GET 
+  /api/budgets?month=YYYY-MM
+  - AC1: {"categoryId":1,"month":"2026-10","limit":500,"type":"Hard"} → 201.
+  - AC2: A second budget for the same category and month → 409.
+  - AC3: limit ≤ 0, month 2026-13 or an unknown type → 400.
+  - AC4: A GET includes the calculated spent, remaining, percentUsed and status
+    (BR-01).
+
+  FR-11 Hard budget enforcement. A category has a Hard budget with a 100.00
+  limit and 90.00 already spent.
+  - AC1: A new expense of 10.00 → 201 (exactly at the limit). The status is
+    Warning.
+  - AC2: A new expense of 10.01 → 422 ProblemDetails, and the expense count does
+    not change.
+
+  FR-12 Soft budget warning. The same setup with a Soft budget.
+  - AC1: A new expense of 20.00 → 201. The warnings[] list contains a
+    budget-exceeded message, and the status is Exceeded.
+
+  Summaries and reports
+
+  FR-13 Monthly totals. GET /api/summaries/monthly?year=2026
+  - AC1: → 200 with [{ month:"2026-01", total, count }, …] for months that have
+    expenses, sorted ascending.
+
+  FR-14 Category summary. GET /api/summaries/categories?month=2026-10
+  - AC1: → 200 with one row per category: categoryId, categoryName, total,
+    count, budgetLimit?, percentUsed? and status?. Totals match the sum of the
+    seeded data.
+  - AC2: An invalid month → 400.
+
+  FR-15 Report (JSON). GET /api/reports/monthly?month=2026-10&format=json
+  - AC1: → 200 application/json with { month, grandTotal, categories[…], 
+    expenses[…] }.
+
+  FR-16 Report (CSV). GET /api/reports/monthly?month=2026-10&format=csv
+  - AC1: → 200 text/csv with Content-Disposition: attachment; 
+    filename="expenses-2026-10.csv".
+  - AC2: The header row is Date,Title,Category,Amount. Values containing commas
+    or quotes are RFC 4180-escaped. Amounts use invariant culture with 2
+    decimals.
+  - AC3: format=xml → 400.
+
+  Platform
+
+  FR-17 Persistence. The data is stored in SQLite and the schema is created only
+  by EF Core migrations. Seed data covers a few categories, budgets and
+  expenses.
+  - AC1: dotnet ef database update on an empty folder creates the database. The
+    API starts and GET /api/categories returns the seeded rows.
+
+  FR-18 API docs. OpenAPI document and UI available in Development. An .http
+  file contains sample requests for every endpoint.
+  - AC1: GET /openapi/v1.json → 200. Every sample request in the .http file runs
+    successfully against a fresh database.
+
+  FR-19 React client. A lean Vite + React + TypeScript app.
+  - AC1: Lists expenses with filters and paging, plus create, edit and delete
+    forms that show validation errors from the API.
+  - AC2: Manages categories and budgets, and shows the budget status (OnTrack /
+    Warning / Exceeded) for the selected month.
+  - AC3: Shows soft-budget warnings after a save and shows a hard-budget 422 as
+    an error. It can download the CSV report.
+  - AC4: The API base URL comes from VITE_API_URL. CORS allows only the Vite dev
+    origin.
+
+  FR-20 Automated tests.
+  - AC1: xUnit unit tests cover the validation and budget rules. Integration
+    tests use WebApplicationFactory with an in-memory SQLite connection and
+    cover every FR-01…FR-16 AC.
+  - AC2: Vitest tests cover the client's API wrapper and at least the expense
+    form validation display.
+  - AC3: dotnet test and npm test both pass.
+
+  6. Non-functional requirements
+
+  ┌────────┬─────────────────────────────────────────────────────────────────┐
+  │   ID   │                           Requirement                           │
+  ├────────┼─────────────────────────────────────────────────────────────────┤
+  │ NFR-01 │ Local only. Runs on localhost. No cloud resources, deployment   │
+  │        │ or external services at runtime.                                │
+  ├────────┼─────────────────────────────────────────────────────────────────┤
+  │        │ No secrets in git. The connection string uses a local file path │
+  │ NFR-02 │  only. .gitignore excludes *.db, bin/, obj/, node_modules/,     │
+  │        │ .env* and appsettings.*.local.json.                             │
+  ├────────┼─────────────────────────────────────────────────────────────────┤
+  │        │ Layered design. Controllers (HTTP only) → Services (business    │
+  │ NFR-03 │ rules) → Data (EF Core DbContext). DTOs are separate from       │
+  │        │ entities. Controllers never use DbContext directly.             │
+  ├────────┼─────────────────────────────────────────────────────────────────┤
+  │        │ Explicit C# types. No var; explicit types everywhere. Nullable  │
+  │ NFR-04 │ reference types are enabled. decimal is used for money and      │
+  │        │ DateOnly for expense dates.                                     │
+  ├────────┼─────────────────────────────────────────────────────────────────┤
+  │ NFR-05 │ Async I/O. All database access is async and takes a             │
+  │        │ CancellationToken.                                              │
+  ├────────┼─────────────────────────────────────────────────────────────────┤
+  │ NFR-06 │ Quality gates. The build has 0 warnings (TreatWarningsAsErrors  │
+  │        │ in the API project). Tests run green before every commit.       │
+  ├────────┼─────────────────────────────────────────────────────────────────┤
+  │        │ Performance (indicative). List endpoints respond in < 300 ms on │
+  │ NFR-07 │  10k expenses locally. Indexes exist on Expense.Date,           │
+  │        │ Expense.CategoryId and the unique (Budget.CategoryId, Month).   │
+  ├────────┼─────────────────────────────────────────────────────────────────┤
+  │ NFR-08 │ Reproducible setup. The README gives clone → run steps for the  │
+  │        │ API and the client in ≤ 5 commands each.                        │
+  └────────┴─────────────────────────────────────────────────────────────────┘
+
+  7. Out of scope
+
+  - Authentication and authorization (no users, logins, tokens or roles)
+  - Multiple users or tenants; there is a single data set
+  - Multiple currencies, currency conversion and FX rates; one implicit currency
+  - Recurring expenses, attachments and receipts, import
+  - Deployment, containerization and production hosting
+  - Report formats other than JSON and CSV (no PDF or Excel)
+
+  8. Claude Code features: usage and demonstration
+
+  #: 1
+  Feature: CLAUDE.md
+  How it is used: Root file with the project overview, stack, build/test
+  commands, layering, coding conventions (explicit types, ProblemDetails) and
+  pointers to the rules.
+  How it is demonstrated (evidence in docs/evidence/): The file is in the repo.
+  A
+  screenshot shows Claude following its conventions without being prompted.
+  ────────────────────────────────────────
+  #: 2
+  Feature: Rules (.claude/rules/*.md)
+  How it is used: Path-scoped rules: api.md (controllers thin, ProblemDetails,
+  status codes), csharp.md (no var, decimal money), tests.md (AC-named tests),
+  client.md (TS strict, no any).
+  How it is demonstrated (evidence in docs/evidence/): The rule files are
+  present. A screenshot shows a rule being applied when editing a matching
+  path.
+  ────────────────────────────────────────
+  #: 3
+  Feature: Skill: reusable
+  How it is used: rest-endpoint-tests: a generic skill that turns an endpoint
+  spec plus acceptance criteria into xUnit WebApplicationFactory integration
+  tests. It works in any ASP.NET Core repo.
+  How it is demonstrated (evidence in docs/evidence/): SKILL.md is present. A
+  transcript or screenshot shows it generating tests for FR-09.
+  ────────────────────────────────────────
+  #: 4
+  Feature: Skill: project-specific
+  How it is used: add-expense-feature: the project workflow for a new FR (DTO →
+  validator → service → controller → migration if needed → tests → .http sample
+   → client hook), following this repo's layout.
+  How it is demonstrated (evidence in docs/evidence/): SKILL.md is present. A
+  screenshot shows it used to implement a feature such as FR-16 CSV.
+  ────────────────────────────────────────
+  #: 5
+  Feature: Subagent 1
+  How it is used: code-reviewer (read-only tools): reviews diffs against
+  CLAUDE.md, the rules and this requirements document, and flags layering or
+  validation gaps.
+  How it is demonstrated (evidence in docs/evidence/):
+  .claude/agents/code-reviewer.md
+  exists. A screenshot shows its review output on a change.
+  ────────────────────────────────────────
+  #: 6
+  Feature: Subagent 2
+  How it is used: test-runner: runs dotnet test and npm test, summarizes
+  failures
+  and maps them back to FR/AC IDs.
+  How it is demonstrated (evidence in docs/evidence/):
+  .claude/agents/test-runner.md
+  exists. A screenshot shows its summary.
+  ────────────────────────────────────────
+  #: 7
+  Feature: MCP integration
+  How it is used: SQLite MCP server configured in .mcp.json so Claude can
+  inspect
+  the schema and data in expenses.db (to verify migrations, seed data and
+  budget totals).
+  How it is demonstrated (evidence in docs/evidence/): .mcp.json is present. A
+  screenshot shows a /mcp connection and a query result.
+  ────────────────────────────────────────
+  #: 8
+  Feature: Pre-hook (PreToolUse)
+  How it is used: Blocks edits to secrets or generated files (.env*, *.db,
+  Migrations/* edited by hand) and dangerous Bash (rm -rf, git  push --force).
+  It exits 2 with a reason.
+  How it is demonstrated (evidence in docs/evidence/): The hook script and
+  settings entry are present. A screenshot shows a blocked attempt.
+  ────────────────────────────────────────
+  #: 9
+  Feature: Post-hook (PostToolUse)
+  How it is used: After Edit/Write on *.cs, runs dotnet format --include <file>
+  and dotnet build. For *.ts(x), runs npx prettier/tsc --noEmit. Failures are
+  reported back to Claude.
+  How it is demonstrated (evidence in docs/evidence/): The hook script is
+  present. A screenshot shows automatic formatting or a build error being
+  fixed.
+  ────────────────────────────────────────
+  #: 10
+  Feature: Cognine Marketplace plugin
+  How it is used: Add the Cognine marketplace (/plugin marketplace add …) and
+  install the plugin named in the course material. Use it during development.
+  How it is demonstrated (evidence in docs/evidence/): /plugin list screenshot
+  plus usage output. The plugin name and source are recorded in the README.
+
+  9. Assumptions
+
+  - "Today" for date validation means the UTC date on the server.
+  - Unknown categoryId on an expense returns 400 (an input error), not 404.
+  - A hard budget allows spending exactly equal to the limit; only spending
+    above the limit returns 422.
+  - A soft budget also returns a warning when a save moves the status into
+    Warning (≥ 80%).
+  - Budget Limit uses the same 2-decimal precision as Amount. No upper limit is
+    set beyond decimal(18,2).
+
+✻ Brewed for 1m 57s · done 2:37 PM
+
+※ recap: You're building the AICC102 Expense Management API, and docs/requirements.md is now written with requirements, validation and business rules, and the Claude Code feature mapping. Next, review its assumptions and tell me the Cognine Marketplace plugin name. (disable recaps in /config)
+
+> /plugin                                                                       
+  ⎿  ✓ Installed React Coding Standards & Best Practices. Plugin is now active.
+
+> Verify the Cognine Marketplace plugin setup for this project. Do not install  
+  or remove anything.                                                           
+  1. Show the contents of .claude/settings.json (enabledPlugins and any         
+  marketplace entries).                                                         
+  2. List every skill and slash command you can see that comes from a Cognine   
+  plugin, grouped by plugin.                                                    
+  3. Check whether any available plugin covers .NET / C#. Say clearly if none   
+  does.                                                                         
+  4. Write docs/plugin-evaluation.md with: plugins available, plugins installed 
+  (scope),                                                                      
+     why each is or is not suitable for a React + TypeScript / ASP.NET Core     
+  project,                                                                      
+     and exactly how and in which phase we will use each one.                   
+     Only report what you actually see; do not assume a plugin exists.          
+  ⎿  12 skills available
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Now the Cognine marketplace catalog, to see every plugin it offers:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The C# and EF Core plugin folders are on disk but aren't listed in
+  marketplace.json. Checking that, plus what the installed React plugin
+  contains:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Two quick checks: whether python3 (which the plugin hooks call) resolves on
+  this machine, and whether the unlisted C# and EF Core standards conflict with
+  our requirements:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● python3 is only the Windows Store stub. Checking whether a real Python exists,
+  and what the EF Core plugin says about SQLite:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The EF Core standards say SQLite is out of scope. Checking whether its hook
+  would actually block adding the SQLite package:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● I have what I need. Writing docs/plugin-evaluation.md:
+
+● Write(docs\plugin-evaluation.md)
+  ⎿  Wrote 93 lines to docs\plugin-evaluation.md
+       1 # Cognine Marketplace — Plugin Evaluation
+       2 
+       3 Verified on 2026-10-26 by reading local configuration and the ma
+         rketplace clone. Nothing was installed or removed.
+       4 
+       6 
+       7 **Project: `.claude/settings.json`** (committed with the repo)
+       8 ```json
+       9 {
+      10   "enabledPlugins": {
+     … +172 lines (ctrl+o to expand)
+  ⎿  PostToolUse:Write hook error
+  ⎿  Failed with non-blocking status code: Python was not found; run without 
+     arguments to install from the Microsoft Store, or disable this shortcut 
+     from Settings > Apps > Advanced app settings > App execu…
+  ⎿  PostToolUse:Write hook error
+  ⎿  Failed with non-blocking status code: Python was not found; run without 
+     arguments to install from the Microsoft Store, or disable this shortcut 
+     from Settings > Apps > Advanced app settings > App execu…
+  ⎿  PostToolUse:Write hook error
+  ⎿  Failed with non-blocking status code: Python was not found; run without 
+     arguments to install from the Microsoft Store, or disable this shortcut 
+     from Settings > Apps > Advanced app settings > App execu…
+
+● The Cognine React plugin is installed and enabled for this project, but its
+  hooks probably can't run on this machine. No Cognine plugin you can install
+  covers .NET or C#. I wrote docs/plugin-evaluation.md and changed nothing else.
+
+  1. Settings
+
+  Project .claude/settings.json:
+  { "enabledPlugins": { "react-coding-standards-best-practices@cognine-coding-st
+  andards-best-practices": true } }
+  The marketplace itself is registered in your user-level
+  ~/.claude/settings.json under extraKnownMarketplaces, pointing to the git URL
+  https://github.com/cognine/cognine-coding-standards-best-practices.git. The
+  project file doesn't register it. It's installed at project scope for this
+  folder, version 1.0.3, commit 4b7f6e5.
+
+  2. What the plugin gives me here
+
+  Only one Cognine plugin is visible: react-coding-standards-best-practices.
+  - 9 skills, which apply automatically when the work matches:
+    react-architecture, react-engineering-standards, react-api-standards,
+    react-error-handling, react-state-mgmt, react-security, react-performance,
+    react-accessibility, react-dependency-governance.
+  - 3 slash commands, each producing a report:
+    - /react-coding-standards-best-practices:react-coding-architecture-audit-com
+      mand
+    - /react-coding-standards-best-practices:react-secure-coding-practices-comma
+      nd
+    - /react-coding-standards-best-practices:react-coding-accessibility-audit-a1
+      1y
+  - 3 automatic checks (Python scripts) that run after every file edit.
+
+  3. .NET / C#
+
+  - Nothing installable covers it. The marketplace catalog lists 7 plugins:
+    React, Express, Angular, Spring Boot, Vue, Django and FastAPI.
+  - Two .NET plugins exist in the repo but aren't in the catalog, so they can't
+    be installed by name: csharp-coding-standards and efcore-coding-standards.
+    - EF Core plugin: incompatible. It only supports SQL Server, and its check
+      blocks adding Microsoft.EntityFrameworkCore.Sqlite, which our stack
+      requires.
+    - C# plugin: poor fit. It requires a 4-project Clean Architecture layout,
+      while we planned a single project with three layers. It also enforces
+      GitFlow branch names and commit-message formats on every shell command.
+  - The C# and EF Core standards will instead come from our own CLAUDE.md, rules
+    and the code-reviewer subagent.
+
+  4. ⚠️ The hooks probably won't run
+
+  The plugin's checks call python3. On this machine python3 is the Windows Store
+  placeholder, which only prints "Python was not found". Your real Python
+  3.12.10 is reachable only as python or py. Until python3 points at the real
+  Python, the checks will most likely fail silently, so you'd have no hook
+  screenshots for evidence. Fixing this is Phase 0 in the plan. I haven't
+  changed anything.
+
+  The document also covers why each plugin does or doesn't fit, a plan for when
+  each React skill, command and hook gets used, and the evidence files to
+  capture.
+
+  If you want, I can update row 10 of docs/requirements.md with the plugin's
+  real name.
+✻ Baked for 1m 36s · done 2:46 PM
+
+> /plugin                                                                       
